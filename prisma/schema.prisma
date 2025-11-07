@@ -1,0 +1,248 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Rol {
+  SUPER_ADMIN
+  RESPONSABLE_SANITARIO
+  RESPONSABLE_SUCURSAL
+  TECNICO_LABORATORIO
+  RECEPCION
+  CLIENTE
+}
+
+enum EstadoComanda {
+  PENDIENTE
+  EN_PROCESO
+  COMPLETADA
+  ENTREGADA
+  CANCELADA
+}
+
+enum TipoChat {
+  SUCURSAL
+  GENERAL
+  PRIVADO
+}
+
+// Modelos principales
+model Usuario {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  nombre            String
+  apellido          String
+  telefono          String?
+  password          String
+  rol               Rol
+  activo            Boolean  @default(true)
+  ultimoAcceso      DateTime?
+  ipUltimoAcceso    String?
+  dispositivoId     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relaciones
+  sucursales        UsuarioSucursal[]
+  comandasCreadas   Comanda[] @relation("ComandaCreadaPor")
+  comandasAsignadas Comanda[] @relation("ComandaAsignadaA")
+  mensajesEnviados  Mensaje[] @relation("MensajeEnviadoPor")
+  resultados        Resultado[]
+  auditoria         Auditoria[]
+
+  @@map("usuarios")
+}
+
+model Sucursal {
+  id          String   @id @default(cuid())
+  nombre      String
+  direccion   String
+  telefono    String
+  email       String?
+  activa      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relaciones
+  usuarios    UsuarioSucursal[]
+  maquinaria  Maquinaria[]
+  comandas    Comanda[]
+  mensajes    Mensaje[]
+
+  @@map("sucursales")
+}
+
+model UsuarioSucursal {
+  id         String   @id @default(cuid())
+  usuarioId  String
+  sucursalId String
+  activo     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  // Relaciones
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  sucursal   Sucursal @relation(fields: [sucursalId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, sucursalId])
+  @@map("usuario_sucursales")
+}
+
+model Maquinaria {
+  id          String   @id @default(cuid())
+  nombre      String
+  modelo      String?
+  marca       String?
+  serie       String?
+  activa      Boolean  @default(true)
+  sucursalId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relaciones
+  sucursal    Sucursal @relation(fields: [sucursalId], references: [id], onDelete: Cascade)
+  pruebas     PruebaMaquinaria[]
+
+  @@map("maquinaria")
+}
+
+model TipoPrueba {
+  id          String   @id @default(cuid())
+  nombre      String
+  descripcion String?
+  elementos   String[] // Array de elementos que incluye esta prueba
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relaciones
+  comandas    Comanda[]
+  maquinaria  PruebaMaquinaria[]
+
+  @@map("tipos_prueba")
+}
+
+model PruebaMaquinaria {
+  id            String   @id @default(cuid())
+  tipoPruebaId  String
+  maquinariaId  String
+  activo        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  // Relaciones
+  tipoPrueba    TipoPrueba @relation(fields: [tipoPruebaId], references: [id], onDelete: Cascade)
+  maquinaria    Maquinaria @relation(fields: [maquinariaId], references: [id], onDelete: Cascade)
+
+  @@unique([tipoPruebaId, maquinariaId])
+  @@map("prueba_maquinaria")
+}
+
+model Cliente {
+  id              String   @id @default(cuid())
+  nombre          String
+  apellido        String
+  email           String   @unique
+  telefono        String?
+  fechaNacimiento DateTime?
+  genero          String?
+  direccion       String?
+  activo          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relaciones
+  comandas        Comanda[]
+
+  @@map("clientes")
+}
+
+model Comanda {
+  id              String        @id @default(cuid())
+  numeroComanda   String        @unique
+  clienteId       String
+  sucursalId      String
+  tipoPruebaId    String
+  elementos       String[]      // Elementos específicos seleccionados
+  estado          EstadoComanda @default(PENDIENTE)
+  observaciones   String?
+  fechaCreacion   DateTime      @default(now())
+  fechaAsignacion DateTime?
+  fechaCompletado DateTime?
+  fechaEntrega    DateTime?
+  creadoPorId     String
+  asignadoAId     String?
+
+  // Relaciones
+  cliente         Cliente       @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  sucursal        Sucursal      @relation(fields: [sucursalId], references: [id], onDelete: Cascade)
+  tipoPrueba      TipoPrueba    @relation(fields: [tipoPruebaId], references: [id])
+  creadoPor       Usuario       @relation("ComandaCreadaPor", fields: [creadoPorId], references: [id])
+  asignadoA       Usuario?      @relation("ComandaAsignadaA", fields: [asignadoAId], references: [id])
+  resultados      Resultado[]
+
+  @@map("comandas")
+}
+
+model Resultado {
+  id              String   @id @default(cuid())
+  comandaId       String
+  elemento        String
+  valor           Float
+  unidad          String
+  rangoNormal     String
+  observaciones   String?
+  fechaRegistro   DateTime @default(now())
+  registradoPorId String
+
+  // Relaciones
+  comanda         Comanda  @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+  registradoPor   Usuario  @relation(fields: [registradoPorId], references: [id])
+
+  @@map("resultados")
+}
+
+model Mensaje {
+  id          String   @id @default(cuid())
+  contenido   String
+  tipo        TipoChat
+  sucursalId  String?
+  remitenteId String
+  destinatarioId String?
+  archivoUrl  String?  // URL del archivo adjunto
+  tipoArchivo String?  // 'imagen', 'documento', 'pdf', etc.
+  nombreArchivo String? // Nombre original del archivo
+  leido       Boolean  @default(false)
+  fechaEnvio  DateTime @default(now())
+
+  // Relaciones
+  sucursal    Sucursal? @relation(fields: [sucursalId], references: [id], onDelete: Cascade)
+  remitente   Usuario   @relation("MensajeEnviadoPor", fields: [remitenteId], references: [id])
+
+  @@map("mensajes")
+}
+
+model Auditoria {
+  id          String   @id @default(cuid())
+  usuarioId   String
+  accion      String
+  tabla       String
+  registroId  String?
+  datosAnteriores Json?
+  datosNuevos Json?
+  ip          String?
+  userAgent   String?
+  dispositivo String?
+  fecha       DateTime @default(now())
+
+  // Relaciones
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+
+  @@map("auditoria")
+}

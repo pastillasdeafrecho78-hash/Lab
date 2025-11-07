@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: laboratorio-postgres
+    environment:
+      POSTGRES_DB: laboratorio_comandas
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - laboratorio-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: laboratorio-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - laboratorio-network
+
+volumes:
+  postgres_data:
+
+networks:
+  laboratorio-network:
+    driver: bridge
