@@ -315,7 +315,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
             <div className="flex items-center">
               <button
                 onClick={() => router.push(`/dashboard/comandas/${params.id}`)}
-                className="mr-4 p-2 hover:bg-secondary-100 rounded-lg"
+                className="mr-4 p-2 rounded-lg bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
               >
                 <ArrowLeftIcon className="h-5 w-5" />
               </button>

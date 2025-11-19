@@ -23,13 +23,18 @@ export async function GET(request: NextRequest) {
     const user = await getUserFromToken(token)
     const { searchParams } = new URL(request.url)
     const sucursalId = searchParams.get('sucursalId')
+    const estado = searchParams.get('estado')
 
-    const where: any = {
-      activa: true
-    }
+    const where: any = {}
 
     if (sucursalId) {
       where.sucursalId = sucursalId
+    }
+
+    if (estado === 'activa') {
+      where.activa = true
+    } else if (estado === 'inactiva') {
+      where.activa = false
     }
 
     // Filtrar por sucursales del usuario si no es super admin
@@ -53,7 +58,8 @@ export async function GET(request: NextRequest) {
             tipoPrueba: {
               select: {
                 id: true,
-                nombre: true
+                nombre: true,
+                elementos: true
               }
             }
           }

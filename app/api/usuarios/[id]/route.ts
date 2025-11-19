@@ -3,7 +3,13 @@ import { prisma } from '@/lib/prisma'
 import { getUserFromToken } from '@/lib/auth'
 import { registrarAuditoria, getAccionAuditoria, sanitizeDataForAudit } from '@/lib/auditoria'
 import { hashPassword } from '@/lib/auth'
+import { ensurePermissionsCatalog, getEffectivePermissionsForUser } from '@/lib/permissions-service'
 import { z } from 'zod'
+
+const permisosOverrideSchema = z.object({
+  permisoId: z.string(),
+  permitido: z.boolean()
+})
 
 const usuarioUpdateSchema = z.object({
   nombre: z.string().min(1, 'Nombre es requerido').optional(),
@@ -11,10 +17,59 @@ const usuarioUpdateSchema = z.object({
   telefono: z.string().optional(),
   password: z.string().min(6, 'Contraseña debe tener al menos 6 caracteres').optional(),
   rol: z.enum(['SUPER_ADMIN', 'RESPONSABLE_SANITARIO', 'RESPONSABLE_SUCURSAL', 'TECNICO_LABORATORIO', 'RECEPCION']).optional(),
-  sucursales: z.array(z.string()).min(1, 'Al menos una sucursal es requerida').optional()
+  sucursales: z.array(z.string()).min(1, 'Al menos una sucursal es requerida').optional(),
+  paquetePermisosId: z.string().optional().nullable(),
+  permisosPersonalizados: z.array(permisosOverrideSchema).optional()
 })
 
-// GET - Obtener usuario por ID
+function mapUsuarioResponse(usuario: any, permisos: string[]) {
+  return {
+    id: usuario.id,
+    email: usuario.email,
+    nombre: usuario.nombre,
+    apellido: usuario.apellido,
+    telefono: usuario.telefono,
+    rol: usuario.rol,
+    activo: usuario.activo,
+    ultimoAcceso: usuario.ultimoAcceso,
+    sucursales: usuario.sucursales.map((us: any) => ({
+      id: us.sucursal.id,
+      nombre: us.sucursal.nombre
+    })),
+    paquetePermisos: usuario.paquetePermisos
+      ? {
+          id: usuario.paquetePermisos.id,
+          nombre: usuario.paquetePermisos.nombre
+        }
+      : null,
+    permisos
+  }
+}
+
+async function obtenerUsuarioDetallado(id: string) {
+  return prisma.usuario.findUnique({
+    where: { id },
+    include: {
+      sucursales: {
+        include: {
+          sucursal: {
+            select: {
+              id: true,
+              nombre: true
+            }
+          }
+        }
+      },
+      paquetePermisos: {
+        select: {
+          id: true,
+          nombre: true
+        }
+      }
+    }
+  })
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -27,7 +82,6 @@ export async function GET(
 
     const user = await getUserFromToken(token)
 
-    // Verificar permisos
     if (!['SUPER_ADMIN', 'RESPONSABLE_SANITARIO'].includes(user.rol)) {
       return NextResponse.json(
         { success: false, error: 'Sin permisos para ver usuarios' },
@@ -35,23 +89,9 @@ export async function GET(
       )
     }
 
-    const { id } = params
+    await ensurePermissionsCatalog()
 
-    const usuario = await prisma.usuario.findUnique({
-      where: { id },
-      include: {
-        sucursales: {
-          include: {
-            sucursal: {
-              select: {
-                id: true,
-                nombre: true
-              }
-            }
-          }
-        }
-      }
-    })
+    const usuario = await obtenerUsuarioDetallado(params.id)
 
     if (!usuario) {
       return NextResponse.json(
@@ -60,10 +100,9 @@ export async function GET(
       )
     }
 
-    // Filtrar según permisos
     if (user.rol !== 'SUPER_ADMIN') {
       const userSucursales = user.sucursales.map(s => s.id)
-      const hasAccess = usuario.sucursales.some(us => 
+      const hasAccess = usuario.sucursales.some(us =>
         userSucursales.includes(us.sucursalId)
       )
 
@@ -75,34 +114,21 @@ export async function GET(
       }
     }
 
+    const permisos = await getEffectivePermissionsForUser(usuario.id)
+
     return NextResponse.json({
       success: true,
-      data: {
-        id: usuario.id,
-        email: usuario.email,
-        nombre: usuario.nombre,
-        apellido: usuario.apellido,
-        telefono: usuario.telefono,
-        rol: usuario.rol,
-        activo: usuario.activo,
-        ultimoAcceso: usuario.ultimoAcceso,
-        sucursales: usuario.sucursales.map(us => ({
-          id: us.sucursal.id,
-          nombre: us.sucursal.nombre
-        }))
-      }
+      data: mapUsuarioResponse(usuario, permisos)
     })
-
   } catch (error: any) {
     console.error('Error al obtener usuario:', error)
     return NextResponse.json(
-      { success: false, error: 'Error interno del servidor' },
+      { success: false, error: error.message || 'Error interno del servidor' },
       { status: 500 }
     )
   }
 }
 
-// PUT - Actualizar usuario
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -117,10 +143,8 @@ export async function PUT(
     const { id } = params
     const body = await request.json()
 
-    // Validar datos
     const validatedData = usuarioUpdateSchema.parse(body)
 
-    // Verificar permisos
     if (!['SUPER_ADMIN', 'RESPONSABLE_SANITARIO'].includes(user.rol)) {
       return NextResponse.json(
         { success: false, error: 'Sin permisos para actualizar usuarios' },
@@ -128,22 +152,9 @@ export async function PUT(
       )
     }
 
-    // Obtener usuario actual para auditoría
-    const usuarioActual = await prisma.usuario.findUnique({
-      where: { id },
-      include: {
-        sucursales: {
-          include: {
-            sucursal: {
-              select: {
-                id: true,
-                nombre: true
-              }
-            }
-          }
-        }
-      }
-    })
+    await ensurePermissionsCatalog()
+
+    const usuarioActual = await obtenerUsuarioDetallado(id)
 
     if (!usuarioActual) {
       return NextResponse.json(
@@ -152,10 +163,9 @@ export async function PUT(
       )
     }
 
-    // Verificar acceso a las sucursales si se están actualizando
     if (validatedData.sucursales && user.rol !== 'SUPER_ADMIN') {
       const userSucursales = user.sucursales.map(s => s.id)
-      const hasAccess = validatedData.sucursales.every(sucursalId => 
+      const hasAccess = validatedData.sucursales.every(sucursalId =>
         userSucursales.includes(sucursalId)
       )
 
@@ -167,7 +177,6 @@ export async function PUT(
       }
     }
 
-    // Verificar que las sucursales existen
     if (validatedData.sucursales) {
       const sucursalesExistentes = await prisma.sucursal.findMany({
         where: {
@@ -184,7 +193,35 @@ export async function PUT(
       }
     }
 
-    // Preparar datos de actualización
+    let paquetePermisosId = usuarioActual.paquetePermisos?.id ?? null
+    const nuevoRol = validatedData.rol ?? usuarioActual.rol
+
+    if (validatedData.paquetePermisosId !== undefined) {
+      if (validatedData.paquetePermisosId === null) {
+        paquetePermisosId = null
+      } else {
+        const paquete = await prisma.paquetePermisos.findUnique({
+          where: { id: validatedData.paquetePermisosId }
+        })
+
+        if (!paquete) {
+          return NextResponse.json(
+            { success: false, error: 'Paquete de permisos no encontrado' },
+            { status: 400 }
+          )
+        }
+
+        if (paquete.rolBase !== nuevoRol) {
+          return NextResponse.json(
+            { success: false, error: 'El paquete seleccionado no corresponde al rol del usuario' },
+            { status: 400 }
+          )
+        }
+
+        paquetePermisosId = paquete.id
+      }
+    }
+
     const updateData: any = {}
     if (validatedData.nombre) updateData.nombre = validatedData.nombre
     if (validatedData.apellido) updateData.apellido = validatedData.apellido
@@ -193,8 +230,8 @@ export async function PUT(
     if (validatedData.password) {
       updateData.password = await hashPassword(validatedData.password)
     }
+    updateData.paquetePermisosId = paquetePermisosId
 
-    // Actualizar usuario
     const usuarioActualizado = await prisma.usuario.update({
       where: { id },
       data: updateData,
@@ -208,83 +245,50 @@ export async function PUT(
               }
             }
           }
+        },
+        paquetePermisos: {
+          select: {
+            id: true,
+            nombre: true
+          }
         }
       }
     })
 
-    // Actualizar sucursales si se proporcionan
     if (validatedData.sucursales) {
-      // Eliminar asignaciones existentes
       await prisma.usuarioSucursal.deleteMany({
         where: { usuarioId: id }
       })
 
-      // Crear nuevas asignaciones
       if (validatedData.sucursales.length > 0) {
         await prisma.usuarioSucursal.createMany({
           data: validatedData.sucursales.map(sucursalId => ({
             usuarioId: id,
-            sucursalId: sucursalId
+            sucursalId
           }))
         })
       }
-
-      // Obtener usuario actualizado con sucursales
-      const usuarioCompleto = await prisma.usuario.findUnique({
-        where: { id },
-        include: {
-          sucursales: {
-            include: {
-              sucursal: {
-                select: {
-                  id: true,
-                  nombre: true
-                }
-              }
-            }
-          }
-        }
-      })
-
-      // Registrar auditoría
-      await registrarAuditoria({
-        usuarioId: user.id,
-        accion: getAccionAuditoria('UPDATE', 'usuario'),
-        tabla: 'usuarios',
-        registroId: id,
-        datosAnteriores: sanitizeDataForAudit({
-          ...usuarioActual,
-          password: '[REDACTED]'
-        }),
-        datosNuevos: sanitizeDataForAudit({
-          ...usuarioCompleto,
-          password: '[REDACTED]'
-        }),
-        ip: request.ip || request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown',
-        dispositivo: 'web'
-      })
-
-      return NextResponse.json({
-        success: true,
-        data: {
-          id: usuarioCompleto!.id,
-          email: usuarioCompleto!.email,
-          nombre: usuarioCompleto!.nombre,
-          apellido: usuarioCompleto!.apellido,
-          telefono: usuarioCompleto!.telefono,
-          rol: usuarioCompleto!.rol,
-          activo: usuarioCompleto!.activo,
-          sucursales: usuarioCompleto!.sucursales.map(us => ({
-            id: us.sucursal.id,
-            nombre: us.sucursal.nombre
-          }))
-        },
-        message: 'Usuario actualizado exitosamente'
-      })
     }
 
-    // Registrar auditoría
+    if (validatedData.permisosPersonalizados) {
+      await prisma.usuarioPermiso.deleteMany({
+        where: { usuarioId: id }
+      })
+
+      if (validatedData.permisosPersonalizados.length > 0) {
+        await prisma.usuarioPermiso.createMany({
+          data: validatedData.permisosPersonalizados.map(permiso => ({
+            usuarioId: id,
+            permisoId: permiso.permisoId,
+            permitido: permiso.permitido
+          }))
+        })
+      }
+    }
+
+    const usuarioConRelations = await obtenerUsuarioDetallado(id)
+    const permisos = await getEffectivePermissionsForUser(id)
+
     await registrarAuditoria({
       usuarioId: user.id,
       accion: getAccionAuditoria('UPDATE', 'usuario'),
@@ -295,8 +299,9 @@ export async function PUT(
         password: '[REDACTED]'
       }),
       datosNuevos: sanitizeDataForAudit({
-        ...usuarioActualizado,
-        password: '[REDACTED]'
+        ...usuarioConRelations,
+        password: '[REDACTED]',
+        permisosPersonalizados: validatedData.permisosPersonalizados ?? []
       }),
       ip: request.ip || request.headers.get('x-forwarded-for') || 'unknown',
       userAgent: request.headers.get('user-agent') || 'unknown',
@@ -305,25 +310,12 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      data: {
-        id: usuarioActualizado.id,
-        email: usuarioActualizado.email,
-        nombre: usuarioActualizado.nombre,
-        apellido: usuarioActualizado.apellido,
-        telefono: usuarioActualizado.telefono,
-        rol: usuarioActualizado.rol,
-        activo: usuarioActualizado.activo,
-        sucursales: usuarioActualizado.sucursales.map(us => ({
-          id: us.sucursal.id,
-          nombre: us.sucursal.nombre
-        }))
-      },
+      data: mapUsuarioResponse(usuarioConRelations, permisos),
       message: 'Usuario actualizado exitosamente'
     })
-
   } catch (error: any) {
     console.error('Error al actualizar usuario:', error)
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Datos inválidos', details: error.errors },
@@ -332,7 +324,7 @@ export async function PUT(
     }
 
     return NextResponse.json(
-      { success: false, error: 'Error interno del servidor' },
+      { success: false, error: error.message || 'Error interno del servidor' },
       { status: 500 }
     )
   }

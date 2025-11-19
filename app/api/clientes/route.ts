@@ -23,6 +23,13 @@ export async function GET(request: NextRequest) {
     }
 
     const user = await getUserFromToken(token)
+
+    if (!user.permisos?.includes('clientes.ver')) {
+      return NextResponse.json(
+        { success: false, error: 'Sin permisos para consultar clientes' },
+        { status: 403 }
+      )
+    }
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
@@ -105,7 +112,7 @@ export async function POST(request: NextRequest) {
     const validatedData = clienteSchema.parse(body)
 
     // Verificar permisos
-    if (!['SUPER_ADMIN', 'RESPONSABLE_SANITARIO', 'RESPONSABLE_SUCURSAL', 'RECEPCION'].includes(user.rol)) {
+    if (!user.permisos?.includes('clientes.editar')) {
       return NextResponse.json(
         { success: false, error: 'Sin permisos para crear clientes' },
         { status: 403 }

@@ -10,7 +10,9 @@ import {
   PencilIcon,
   TrashIcon,
   EyeIcon,
-  WrenchScrewdriverIcon
+  WrenchScrewdriverIcon,
+  SquaresPlusIcon,
+  BeakerIcon
 } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 
@@ -29,6 +31,7 @@ interface Maquinaria {
     tipoPrueba: {
       id: string
       nombre: string
+      elementos: string[]
     }
   }>
   _count: {
@@ -41,6 +44,28 @@ interface Sucursal {
   nombre: string
 }
 
+interface Analito {
+  id: string
+  nombre: string
+  descripcion?: string | null
+  unidad?: string | null
+}
+
+interface CategoriaAnalito {
+  id: string
+  nombre: string
+  descripcion?: string | null
+  analitos: Array<{
+    analito: Analito
+  }>
+}
+
+interface UsuarioActual {
+  id: string
+  nombre: string
+  permisos: string[]
+}
+
 export default function MaquinariaPage() {
   const [maquinaria, setMaquinaria] = useState<Maquinaria[]>([])
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
@@ -48,6 +73,27 @@ export default function MaquinariaPage() {
   const [showModal, setShowModal] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterSucursal, setFilterSucursal] = useState('')
+  const [currentUser, setCurrentUser] = useState<UsuarioActual | null>(null)
+  const [analitos, setAnalitos] = useState<Analito[]>([])
+  const [categorias, setCategorias] = useState<CategoriaAnalito[]>([])
+  const [loadingCatalog, setLoadingCatalog] = useState(false)
+  const [showAnalitoModal, setShowAnalitoModal] = useState(false)
+  const [showCategoriaModal, setShowCategoriaModal] = useState(false)
+  const [editingAnalito, setEditingAnalito] = useState<Analito | null>(null)
+  const [editingCategoria, setEditingCategoria] = useState<CategoriaAnalito | null>(null)
+  const [newAnalitoData, setNewAnalitoData] = useState({
+    nombre: '',
+    unidad: '',
+    descripcion: ''
+  })
+  const [newCategoriaData, setNewCategoriaData] = useState({
+    nombre: '',
+    descripcion: '',
+    analitoIds: [] as string[]
+  })
+  const [creatingAnalito, setCreatingAnalito] = useState(false)
+  const [creatingCategoria, setCreatingCategoria] = useState(false)
+  const [showCatalogSection, setShowCatalogSection] = useState(false)
   const router = useRouter()
 
   // Formulario de nueva maquinaria
@@ -58,6 +104,14 @@ export default function MaquinariaPage() {
     serie: '',
     sucursalId: ''
   })
+
+  const canCreateAnalitos = currentUser?.permisos?.includes('catalogo.analitos.crear') ?? false
+  const canEditAnalitos = currentUser?.permisos?.includes('catalogo.analitos.editar') ?? false
+  const canDeleteAnalitos = currentUser?.permisos?.includes('catalogo.analitos.eliminar') ?? false
+  const canCreateCategorias = currentUser?.permisos?.includes('catalogo.categorias.crear') ?? false
+  const canEditCategorias = currentUser?.permisos?.includes('catalogo.categorias.editar') ?? false
+  const canDeleteCategorias = currentUser?.permisos?.includes('catalogo.categorias.eliminar') ?? false
+  const canViewCatalog = currentUser?.permisos?.includes('catalogo.analitos.ver') ?? false
 
   useEffect(() => {
     loadData()
@@ -71,27 +125,116 @@ export default function MaquinariaPage() {
         return
       }
 
-      const [maquinariaRes, sucursalesRes] = await Promise.all([
+      const [maquinariaRes, sucursalesRes, meRes] = await Promise.all([
         fetch('/api/maquinaria', {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
         fetch('/api/sucursales', {
           headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch('/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
         })
       ])
 
-      const [maquinariaData, sucursalesData] = await Promise.all([
+      const [maquinariaData, sucursalesData, meData] = await Promise.all([
         maquinariaRes.json(),
-        sucursalesRes.json()
+        sucursalesRes.json(),
+        meRes.json()
       ])
+
+      if (!meRes.ok || !meData.success) {
+        toast.error(meData.error || 'Sesión inválida, inicia sesión nuevamente')
+        router.push('/')
+        return
+      }
+
+      setCurrentUser({
+        id: meData.data.id,
+        nombre: meData.data.nombre,
+        permisos: meData.data.permisos || []
+      })
 
       if (maquinariaData.success) setMaquinaria(maquinariaData.data)
       if (sucursalesData.success) setSucursales(sucursalesData.data)
+
+      if ((meData.data.permisos || []).some((permiso: string) =>
+        ['catalogo.analitos.ver', 'catalogo.analitos.crear', 'catalogo.categorias.ver', 'catalogo.categorias.crear'].includes(permiso)
+      )) {
+        await loadCatalogData(meData.data.permisos || [])
+      }
 
     } catch (error) {
       toast.error('Error al cargar datos')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadCatalogData = async (permisosOverride?: string[]) => {
+    try {
+      setLoadingCatalog(true)
+      const token = localStorage.getItem('token')
+      if (!token) {
+        return
+      }
+
+      const permisos = permisosOverride ?? currentUser?.permisos ?? []
+      const puedeVerAnalitos = permisos.includes('catalogo.analitos.ver')
+      const puedeCrearAnalitos = permisos.includes('catalogo.analitos.crear')
+      const puedeVerCategorias = permisos.includes('catalogo.categorias.ver')
+      const puedeCrearCategorias = permisos.includes('catalogo.categorias.crear')
+
+      const requests: Promise<Response>[] = []
+
+      if (puedeVerAnalitos || puedeCrearAnalitos) {
+        requests.push(fetch('/api/analitos', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }))
+      }
+
+      if (puedeVerCategorias || puedeCrearCategorias) {
+        requests.push(fetch('/api/categorias-analito', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }))
+      }
+
+      if (requests.length === 0) {
+        return
+      }
+
+      const responses = await Promise.all(requests)
+      const payloads = await Promise.all(responses.map(res => res.json()))
+
+      let analitosPayloadIndex = -1
+      let categoriasPayloadIndex = -1
+
+      if (puedeVerAnalitos || puedeCrearAnalitos) {
+        analitosPayloadIndex = 0
+      }
+
+      if (puedeVerCategorias || puedeCrearCategorias) {
+        categoriasPayloadIndex = (puedeVerAnalitos || puedeCrearAnalitos) ? 1 : 0
+      }
+
+      if (analitosPayloadIndex >= 0) {
+        const analitosData = payloads[analitosPayloadIndex]
+        if (analitosData.success) {
+          setAnalitos(analitosData.data)
+        }
+      }
+
+      if (categoriasPayloadIndex >= 0) {
+        const categoriasData = payloads[categoriasPayloadIndex]
+        if (categoriasData.success) {
+          setCategorias(categoriasData.data)
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar catálogo de analitos:', error)
+      toast.error('No se pudo cargar el catálogo de parámetros')
+    } finally {
+      setLoadingCatalog(false)
     }
   }
 
@@ -160,6 +303,233 @@ export default function MaquinariaPage() {
     }
   }
 
+  const handleCreateAnalito = async () => {
+    if (!newAnalitoData.nombre.trim()) {
+      toast.error('El nombre del parámetro es obligatorio')
+      return
+    }
+
+    try {
+      setCreatingAnalito(true)
+      const token = localStorage.getItem('token')
+      const url = editingAnalito 
+        ? `/api/analitos/${editingAnalito.id}`
+        : '/api/analitos'
+      const method = editingAnalito ? 'PUT' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          nombre: newAnalitoData.nombre.trim(),
+          unidad: newAnalitoData.unidad.trim() || undefined,
+          descripcion: newAnalitoData.descripcion.trim() || undefined
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success(editingAnalito ? 'Parámetro actualizado correctamente' : 'Parámetro registrado correctamente')
+        if (editingAnalito) {
+          setAnalitos(prev =>
+            prev.map(a => a.id === editingAnalito.id ? data.data : a)
+              .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }))
+          )
+        } else {
+          setAnalitos(prev =>
+            [...prev, data.data].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }))
+          )
+        }
+        setShowAnalitoModal(false)
+        setEditingAnalito(null)
+        setNewAnalitoData({
+          nombre: '',
+          unidad: '',
+          descripcion: ''
+        })
+      } else {
+        toast.error(data.error || `Error al ${editingAnalito ? 'actualizar' : 'registrar'} parámetro`)
+      }
+    } catch (error) {
+      toast.error('Error de conexión')
+    } finally {
+      setCreatingAnalito(false)
+    }
+  }
+
+  const handleCreateCategoria = async () => {
+    if (!newCategoriaData.nombre.trim()) {
+      toast.error('El nombre de la categoría es obligatorio')
+      return
+    }
+
+    if (newCategoriaData.analitoIds.length === 0) {
+      toast.error('Selecciona al menos un parámetro')
+      return
+    }
+
+    try {
+      setCreatingCategoria(true)
+      const token = localStorage.getItem('token')
+      const url = editingCategoria 
+        ? `/api/categorias-analito/${editingCategoria.id}`
+        : '/api/categorias-analito'
+      const method = editingCategoria ? 'PUT' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          nombre: newCategoriaData.nombre.trim(),
+          descripcion: newCategoriaData.descripcion.trim() || undefined,
+          analitoIds: newCategoriaData.analitoIds
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success(editingCategoria ? 'Categoría actualizada correctamente' : 'Categoría creada correctamente')
+        if (editingCategoria) {
+          setCategorias(prev =>
+            prev.map(cat => cat.id === editingCategoria.id ? data.data : cat)
+              .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }))
+          )
+        } else {
+          setCategorias(prev =>
+            [...prev, data.data].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }))
+          )
+        }
+        setShowCategoriaModal(false)
+        setEditingCategoria(null)
+        setNewCategoriaData({
+          nombre: '',
+          descripcion: '',
+          analitoIds: []
+        })
+      } else {
+        toast.error(data.error || `Error al ${editingCategoria ? 'actualizar' : 'crear'} categoría`)
+      }
+    } catch (error) {
+      toast.error('Error de conexión')
+    } finally {
+      setCreatingCategoria(false)
+    }
+  }
+
+  const handleEditAnalito = async (analito: Analito) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/analitos/${analito.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setEditingAnalito(data.data)
+        setNewAnalitoData({
+          nombre: data.data.nombre,
+          unidad: data.data.unidad || '',
+          descripcion: data.data.descripcion || ''
+        })
+        setShowAnalitoModal(true)
+      } else {
+        toast.error(data.error || 'Error al cargar parámetro')
+      }
+    } catch (error) {
+      toast.error('Error de conexión')
+    }
+  }
+
+  const handleEditCategoria = async (categoria: CategoriaAnalito) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/categorias-analito/${categoria.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setEditingCategoria(data.data)
+        setNewCategoriaData({
+          nombre: data.data.nombre,
+          descripcion: data.data.descripcion || '',
+          analitoIds: data.data.analitos.map((d: { analito: { id: string } }) => d.analito.id)
+        })
+        if (analitos.length === 0) {
+          void loadCatalogData(currentUser?.permisos || [])
+        }
+        setShowCategoriaModal(true)
+      } else {
+        toast.error(data.error || 'Error al cargar categoría')
+      }
+    } catch (error) {
+      toast.error('Error de conexión')
+    }
+  }
+
+  const handleDeleteAnalito = async (id: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este parámetro?')) {
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/analitos/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('Parámetro eliminado exitosamente')
+        setAnalitos(prev => prev.filter(a => a.id !== id))
+      } else {
+        toast.error(data.error || 'Error al eliminar parámetro')
+      }
+    } catch (error) {
+      toast.error('Error de conexión')
+    }
+  }
+
+  const handleDeleteCategoria = async (id: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta categoría?')) {
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/categorias-analito/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('Categoría eliminada exitosamente')
+        setCategorias(prev => prev.filter(c => c.id !== id))
+      } else {
+        toast.error(data.error || 'Error al eliminar categoría')
+      }
+    } catch (error) {
+      toast.error('Error de conexión')
+    }
+  }
+
+  const formatElemento = (valor: string) =>
+    valor
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase())
+
   const filteredMaquinaria = maquinaria.filter(equipo => {
     const matchesSearch = equipo.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          equipo.modelo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -188,7 +558,7 @@ export default function MaquinariaPage() {
             <div className="flex items-center">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="mr-4 p-2 hover:bg-secondary-100 rounded-lg"
+                className="mr-4 p-2 rounded-lg bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -197,19 +567,204 @@ export default function MaquinariaPage() {
               <h1 className="text-xl font-semibold text-secondary-900">Gestión de Maquinaria</h1>
             </div>
             
-            <button
-              onClick={() => setShowModal(true)}
-              className="btn btn-primary"
-            >
-              <PlusIcon className="h-5 w-5 mr-2" />
-              Nueva Maquinaria
-            </button>
+            <div className="flex items-center gap-3">
+              {canViewCatalog && (
+                <button
+                  onClick={() => {
+                    if (analitos.length === 0 && categorias.length === 0) {
+                      void loadCatalogData(currentUser?.permisos || [])
+                    }
+                    setShowCatalogSection(!showCatalogSection)
+                  }}
+                  className="btn btn-secondary"
+                >
+                  <BeakerIcon className="h-5 w-5 mr-2" />
+                  {showCatalogSection ? 'Ocultar' : 'Ver'} Catálogo
+                </button>
+              )}
+
+              {canCreateCategorias && (
+                <button
+                  onClick={() => {
+                    setEditingCategoria(null)
+                    if (analitos.length === 0) {
+                      void loadCatalogData(currentUser?.permisos || [])
+                    }
+                    setNewCategoriaData({
+                      nombre: '',
+                      descripcion: '',
+                      analitoIds: []
+                    })
+                    setShowCategoriaModal(true)
+                  }}
+                  className="btn btn-secondary"
+                >
+                  <SquaresPlusIcon className="h-5 w-5 mr-2" />
+                  Nueva categoría
+                </button>
+              )}
+
+              {canCreateAnalitos && (
+                <button
+                  onClick={() => {
+                    setEditingAnalito(null)
+                    setNewAnalitoData({
+                      nombre: '',
+                      unidad: '',
+                      descripcion: ''
+                    })
+                    setShowAnalitoModal(true)
+                  }}
+                  className="btn btn-secondary"
+                >
+                  <BeakerIcon className="h-5 w-5 mr-2" />
+                  Nuevo parámetro
+                </button>
+              )}
+
+              <button
+                onClick={() => setShowModal(true)}
+                className="btn btn-primary"
+              >
+                <PlusIcon className="h-5 w-5 mr-2" />
+                Nueva Maquinaria
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Sección de Catálogo */}
+        {showCatalogSection && canViewCatalog && (
+          <div className="card mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-secondary-900">Catálogo Clínico</h2>
+              <button
+                onClick={() => setShowCatalogSection(false)}
+                className="text-secondary-400 hover:text-secondary-600"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Lista de Analitos */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-md font-medium text-secondary-700">Parámetros</h3>
+                  <span className="text-sm text-secondary-500">{analitos.length} registrados</span>
+                </div>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {analitos.length === 0 ? (
+                    <p className="text-sm text-secondary-500 text-center py-4">
+                      No hay parámetros registrados
+                    </p>
+                  ) : (
+                    analitos.map(analito => (
+                      <div
+                        key={analito.id}
+                        className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg hover:bg-secondary-100 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-secondary-900">{analito.nombre}</p>
+                          {analito.unidad && (
+                            <p className="text-xs text-secondary-500">Unidad: {analito.unidad}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {canEditAnalitos && (
+                            <button
+                              onClick={() => handleEditAnalito(analito)}
+                              className="text-primary-600 hover:text-primary-900"
+                              title="Editar"
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                            </button>
+                          )}
+                          {canDeleteAnalitos && (
+                            <button
+                              onClick={() => handleDeleteAnalito(analito.id)}
+                              className="text-danger-600 hover:text-danger-900"
+                              title="Eliminar"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Lista de Categorías */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-md font-medium text-secondary-700">Categorías</h3>
+                  <span className="text-sm text-secondary-500">{categorias.length} registradas</span>
+                </div>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {categorias.length === 0 ? (
+                    <p className="text-sm text-secondary-500 text-center py-4">
+                      No hay categorías registradas
+                    </p>
+                  ) : (
+                    categorias.map(categoria => (
+                      <div
+                        key={categoria.id}
+                        className="p-3 bg-secondary-50 rounded-lg hover:bg-secondary-100 transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-secondary-900">{categoria.nombre}</p>
+                            {categoria.descripcion && (
+                              <p className="text-xs text-secondary-500 mt-1">{categoria.descripcion}</p>
+                            )}
+                            <p className="text-xs text-secondary-400 mt-1">
+                              {categoria.analitos.length} parámetros
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {canEditCategorias && (
+                              <button
+                                onClick={() => handleEditCategoria(categoria)}
+                                className="text-primary-600 hover:text-primary-900"
+                                title="Editar"
+                              >
+                                <PencilIcon className="h-4 w-4" />
+                              </button>
+                            )}
+                            {canDeleteCategorias && (
+                              <button
+                                onClick={() => handleDeleteCategoria(categoria.id)}
+                                className="text-danger-600 hover:text-danger-900"
+                                title="Eliminar"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        {categoria.analitos.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-secondary-200">
+                            <p className="text-xs text-secondary-600">
+                              {categoria.analitos.map(d => d.analito.nombre).join(', ')}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Filtros */}
         <div className="card mb-6">
           <div className="flex flex-col md:flex-row gap-4">
@@ -310,18 +865,32 @@ export default function MaquinariaPage() {
 
                 {equipo.pruebas.length > 0 && (
                   <div>
-                    <label className="text-sm font-medium text-secondary-500">Pruebas Asignadas</label>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {equipo.pruebas.slice(0, 3).map(prueba => (
-                        <span key={prueba.tipoPrueba.id} className="badge badge-primary text-xs">
-                          {prueba.tipoPrueba.nombre}
-                        </span>
+                    <label className="text-sm font-medium text-secondary-500">Pruebas asignadas</label>
+                    <div className="mt-2 space-y-3">
+                      {equipo.pruebas.map(prueba => (
+                        <div
+                          key={prueba.tipoPrueba.id}
+                          className="border border-secondary-200 rounded-lg p-3 bg-secondary-50"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-secondary-900">
+                              {prueba.tipoPrueba.nombre}
+                            </span>
+                            <span className="text-xs text-secondary-500">
+                              {prueba.tipoPrueba.elementos.length} parámetros
+                            </span>
+                          </div>
+                          {prueba.tipoPrueba.elementos.length > 0 && (
+                            <ul className="mt-2 space-y-1 text-xs text-secondary-600">
+                              {prueba.tipoPrueba.elementos.map(elemento => (
+                                <li key={`${prueba.tipoPrueba.id}-${elemento}`}>
+                                  • {formatElemento(elemento)}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
                       ))}
-                      {equipo.pruebas.length > 3 && (
-                        <span className="badge badge-secondary text-xs">
-                          +{equipo.pruebas.length - 3} más
-                        </span>
-                      )}
                     </div>
                   </div>
                 )}
@@ -451,6 +1020,236 @@ export default function MaquinariaPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Nuevo Parámetro */}
+      {showAnalitoModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-secondary-900">
+                  {editingAnalito ? 'Editar parámetro' : 'Nuevo parámetro'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowAnalitoModal(false)
+                    setEditingAnalito(null)
+                    setNewAnalitoData({
+                      nombre: '',
+                      unidad: '',
+                      descripcion: ''
+                    })
+                  }}
+                  className="text-secondary-400 hover:text-secondary-600"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    Nombre *
+                  </label>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="Nombre del parámetro"
+                    value={newAnalitoData.nombre}
+                    onChange={(e) => setNewAnalitoData(prev => ({ ...prev, nombre: e.target.value }))}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    Unidad
+                  </label>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="mg/dL, mmol/L..."
+                    value={newAnalitoData.unidad}
+                    onChange={(e) => setNewAnalitoData(prev => ({ ...prev, unidad: e.target.value }))}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    Descripción
+                  </label>
+                  <textarea
+                    className="input"
+                    rows={3}
+                    placeholder="Notas u observaciones sobre el parámetro"
+                    value={newAnalitoData.descripcion}
+                    onChange={(e) => setNewAnalitoData(prev => ({ ...prev, descripcion: e.target.value }))}
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAnalitoModal(false)
+                      setNewAnalitoData({
+                        nombre: '',
+                        unidad: '',
+                        descripcion: ''
+                      })
+                    }}
+                    className="btn btn-secondary"
+                    disabled={creatingAnalito}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateAnalito}
+                    className="btn btn-primary"
+                    disabled={creatingAnalito}
+                  >
+                    {creatingAnalito ? 'Guardando...' : editingAnalito ? 'Actualizar' : 'Registrar'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Nueva Categoría */}
+      {showCategoriaModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-secondary-900">
+                  {editingCategoria ? 'Editar categoría de pruebas' : 'Nueva categoría de pruebas'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowCategoriaModal(false)
+                    setEditingCategoria(null)
+                    setNewCategoriaData({
+                      nombre: '',
+                      descripcion: '',
+                      analitoIds: []
+                    })
+                  }}
+                  className="text-secondary-400 hover:text-secondary-600"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                      Nombre *
+                    </label>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="Ej. Química 6"
+                      value={newCategoriaData.nombre}
+                      onChange={(e) => setNewCategoriaData(prev => ({ ...prev, nombre: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                      Descripción
+                    </label>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="Descripción breve"
+                      value={newCategoriaData.descripcion}
+                      onChange={(e) => setNewCategoriaData(prev => ({ ...prev, descripcion: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    Parámetros incluidos *
+                  </label>
+
+                  {loadingCatalog ? (
+                    <div className="text-sm text-secondary-500">Cargando parámetros...</div>
+                  ) : analitos.length === 0 ? (
+                    <p className="text-sm text-secondary-500">
+                      No hay parámetros registrados todavía. Crea al menos uno para poder formar una categoría.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto border border-secondary-200 rounded-lg p-3">
+                      {analitos.map(analito => {
+                        const checked = newCategoriaData.analitoIds.includes(analito.id)
+                        return (
+                          <label key={analito.id} className="flex items-start gap-2 text-sm text-secondary-700">
+                            <input
+                              type="checkbox"
+                              className="mt-1 rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+                              checked={checked}
+                              onChange={(e) => {
+                                setNewCategoriaData(prev => ({
+                                  ...prev,
+                                  analitoIds: e.target.checked
+                                    ? [...prev.analitoIds, analito.id]
+                                    : prev.analitoIds.filter(id => id !== analito.id)
+                                }))
+                              }}
+                            />
+                            <div>
+                              <p className="font-medium">{analito.nombre}</p>
+                              {analito.unidad && (
+                                <p className="text-xs text-secondary-500">Unidad: {analito.unidad}</p>
+                              )}
+                              {analito.descripcion && (
+                                <p className="text-xs text-secondary-400 mt-0.5">{analito.descripcion}</p>
+                              )}
+                            </div>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCategoriaModal(false)
+                      setNewCategoriaData({
+                        nombre: '',
+                        descripcion: '',
+                        analitoIds: []
+                      })
+                    }}
+                    className="btn btn-secondary"
+                    disabled={creatingCategoria}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateCategoria}
+                    className="btn btn-primary"
+                    disabled={creatingCategoria || analitos.length === 0}
+                  >
+                    {creatingCategoria ? 'Guardando...' : editingCategoria ? 'Actualizar categoría' : 'Registrar categoría'}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

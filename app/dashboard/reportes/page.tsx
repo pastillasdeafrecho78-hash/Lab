@@ -228,7 +228,7 @@ export default function ReportesPage() {
             <div className="flex items-center">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="mr-4 p-2 hover:bg-secondary-100 rounded-lg"
+                className="mr-4 p-2 rounded-lg bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

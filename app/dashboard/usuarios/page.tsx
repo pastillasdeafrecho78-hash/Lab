@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
   PlusIcon,
@@ -27,11 +27,42 @@ interface Usuario {
     id: string
     nombre: string
   }>
+  paquetePermisos?: {
+    id: string
+    nombre: string
+  } | null
+  permisos: string[]
 }
 
 interface Sucursal {
   id: string
   nombre: string
+}
+
+interface Permiso {
+  id: string
+  clave: string
+  nombre: string
+  descripcion?: string | null
+  categoria?: string | null
+}
+
+interface PaquetePermisoDetalle {
+  permisoId: string
+  clave: string
+  nombre: string
+  descripcion?: string | null
+  categoria?: string | null
+  permitido: boolean
+}
+
+interface PaquetePermisos {
+  id: string
+  nombre: string
+  descripcion?: string | null
+  rolBase: string
+  esPersonalizado: boolean
+  permisos: PaquetePermisoDetalle[]
 }
 
 const roles = [
@@ -45,11 +76,14 @@ const roles = [
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
+  const [permisosCatalogo, setPermisosCatalogo] = useState<Permiso[]>([])
+  const [paquetesPermisos, setPaquetesPermisos] = useState<PaquetePermisos[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterRol, setFilterRol] = useState('')
+  const [permisosSeleccionados, setPermisosSeleccionados] = useState<Record<string, boolean>>({})
   const router = useRouter()
 
   // Formulario de nuevo/editar usuario
@@ -60,12 +94,46 @@ export default function UsuariosPage() {
     telefono: '',
     password: '',
     rol: 'RECEPCION',
-    sucursales: [] as string[]
+    sucursales: [] as string[],
+    paquetePermisosId: ''
   })
 
   useEffect(() => {
     loadData()
   }, [])
+
+  const permisosPorCategoria = useMemo(() => {
+    const categorias = new Map<string, Permiso[]>()
+    permisosCatalogo.forEach(permiso => {
+      const key = permiso.categoria || 'General'
+      if (!categorias.has(key)) {
+        categorias.set(key, [])
+      }
+      categorias.get(key)!.push(permiso)
+    })
+
+    return Array.from(categorias.entries()).map(([categoria, permisos]) => ({
+      categoria,
+      permisos: permisos.sort((a, b) => a.nombre.localeCompare(b.nombre))
+    }))
+  }, [permisosCatalogo])
+
+  const overridesCount = useMemo(() => {
+    if (permisosCatalogo.length === 0) return 0
+    const baseMap = construirMapaBase(formData.rol, formData.paquetePermisosId || null)
+    let count = 0
+    Object.entries(permisosSeleccionados).forEach(([permisoId, permitido]) => {
+      const base = baseMap[permisoId] ?? false
+      if (permitido !== base) {
+        count++
+      }
+    })
+    return count
+  }, [permisosSeleccionados, formData.rol, formData.paquetePermisosId, permisosCatalogo, paquetesPermisos])
+
+  const paquetesDisponibles = useMemo(() => {
+    return paquetesPermisos.filter(paquete => paquete.rolBase === formData.rol)
+  }, [paquetesPermisos, formData.rol])
 
   const loadData = async () => {
     try {
@@ -75,18 +143,26 @@ export default function UsuariosPage() {
         return
       }
 
-      const [usuariosRes, sucursalesRes] = await Promise.all([
+      const [usuariosRes, sucursalesRes, permisosRes, paquetesRes] = await Promise.all([
         fetch('/api/usuarios', {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
         fetch('/api/sucursales', {
           headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch('/api/permisos', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch('/api/paquetes-permisos', {
+          headers: { 'Authorization': `Bearer ${token}` }
         })
       ])
 
-      const [usuariosData, sucursalesData] = await Promise.all([
+      const [usuariosData, sucursalesData, permisosData, paquetesData] = await Promise.all([
         usuariosRes.json(),
-        sucursalesRes.json()
+        sucursalesRes.json(),
+        permisosRes.json(),
+        paquetesRes.json()
       ])
 
       if (usuariosData.success) {
@@ -98,11 +174,66 @@ export default function UsuariosPage() {
       if (sucursalesData.success) {
         setSucursales(sucursalesData.data)
       }
+
+      if (permisosData.success) {
+        setPermisosCatalogo(permisosData.data)
+      } else {
+        toast.error(permisosData.error || 'Error al cargar permisos')
+      }
+
+      if (paquetesData.success) {
+        setPaquetesPermisos(paquetesData.data)
+      } else {
+        toast.error(paquetesData.error || 'Error al cargar paquetes de permisos')
+      }
     } catch (error) {
       toast.error('Error de conexión')
     } finally {
       setLoading(false)
     }
+  }
+
+  const encontrarPaqueteBase = (rol: string, paqueteId?: string) => {
+    if (paqueteId) {
+      const paquete = paquetesPermisos.find(p => p.id === paqueteId)
+      if (paquete) return paquete
+    }
+    return paquetesPermisos.find(
+      p => p.rolBase === rol && !p.esPersonalizado
+    ) || null
+  }
+
+  const construirMapaBase = (rol: string, paqueteId?: string | null) => {
+    const mapa: Record<string, boolean> = {}
+    const paquete = encontrarPaqueteBase(rol, paqueteId || undefined)
+
+    permisosCatalogo.forEach(permiso => {
+      const detalle = paquete?.permisos.find(p => p.permisoId === permiso.id)
+      mapa[permiso.id] = detalle ? detalle.permitido : false
+    })
+
+    return mapa
+  }
+
+  const construirMapaDesdeEfectivos = (permisosEfectivos: string[]) => {
+    const set = new Set(permisosEfectivos)
+    const mapa: Record<string, boolean> = {}
+    permisosCatalogo.forEach(permiso => {
+      mapa[permiso.id] = set.has(permiso.clave)
+    })
+    return mapa
+  }
+
+  const actualizarSeleccionesPorRol = (rol: string) => {
+    if (permisosCatalogo.length === 0) return
+    const paquete = encontrarPaqueteBase(rol, formData.paquetePermisosId || undefined)
+    const paqueteId = paquete?.id || ''
+    setFormData(prev => ({
+      ...prev,
+      rol,
+      paquetePermisosId: paqueteId
+    }))
+    setPermisosSeleccionados(construirMapaBase(rol, paqueteId || null))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -144,6 +275,21 @@ export default function UsuariosPage() {
         body.password = formData.password
       }
 
+      if (formData.paquetePermisosId) {
+        body.paquetePermisosId = formData.paquetePermisosId
+      }
+
+      const baseMap = construirMapaBase(formData.rol, formData.paquetePermisosId || null)
+      const overrides = Object.entries(permisosSeleccionados).reduce<Array<{ permisoId: string; permitido: boolean }>>((acc, [permisoId, permitido]) => {
+        const base = baseMap[permisoId] ?? false
+        if (permitido !== base) {
+          acc.push({ permisoId, permitido })
+        }
+        return acc
+      }, [])
+
+      body.permisosPersonalizados = overrides
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -169,18 +315,63 @@ export default function UsuariosPage() {
     }
   }
 
-  const handleEdit = (usuario: Usuario) => {
-    setEditingUsuario(usuario)
-    setFormData({
-      email: usuario.email,
-      nombre: usuario.nombre,
-      apellido: usuario.apellido,
-      telefono: usuario.telefono || '',
-      password: '',
-      rol: usuario.rol,
-      sucursales: usuario.sucursales.map(s => s.id)
-    })
-    setShowModal(true)
+  const handleEdit = async (usuario: Usuario) => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        router.push('/')
+        return
+      }
+
+      const response = await fetch(`/api/usuarios/${usuario.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      const data = await response.json()
+
+      if (!data.success) {
+        toast.error(data.error || 'Error al cargar usuario')
+        return
+      }
+
+      const detalle = data.data
+      const paqueteId = detalle.paquetePermisos?.id || ''
+
+      setEditingUsuario({
+        ...usuario,
+        paquetePermisos: detalle.paquetePermisos,
+        permisos: detalle.permisos
+      })
+
+      setFormData({
+        email: detalle.email,
+        nombre: detalle.nombre,
+        apellido: detalle.apellido,
+        telefono: detalle.telefono || '',
+        password: '',
+        rol: detalle.rol,
+        sucursales: detalle.sucursales.map((s: { id: string }) => s.id),
+        paquetePermisosId: paqueteId
+      })
+
+      if (permisosCatalogo.length > 0) {
+        const mapa = construirMapaDesdeEfectivos(detalle.permisos)
+        if (Object.keys(mapa).length > 0) {
+          setPermisosSeleccionados(mapa)
+        } else {
+          setPermisosSeleccionados(construirMapaBase(detalle.rol, paqueteId || null))
+        }
+      } else {
+        setPermisosSeleccionados({})
+      }
+
+      setShowModal(true)
+    } catch (error) {
+      console.error(error)
+      toast.error('Error al cargar usuario')
+    }
   }
 
   const toggleSucursal = (sucursalId: string) => {
@@ -192,22 +383,59 @@ export default function UsuariosPage() {
     }))
   }
 
-  const resetForm = () => {
+  const handleRolChange = (rol: string) => {
+    const paquete = encontrarPaqueteBase(rol)
+    const paqueteId = paquete?.id || ''
+    setFormData(prev => ({
+      ...prev,
+      rol,
+      paquetePermisosId: paqueteId
+    }))
+    setPermisosSeleccionados(construirMapaBase(rol, paqueteId || null))
+  }
+
+  const handlePaqueteChange = (paqueteId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      paquetePermisosId: paqueteId
+    }))
+    setPermisosSeleccionados(construirMapaBase(formData.rol, paqueteId || null))
+  }
+
+  const handlePermisoToggle = (permisoId: string) => {
+    setPermisosSeleccionados(prev => ({
+      ...prev,
+      [permisoId]: !prev[permisoId]
+    }))
+  }
+
+  const resetForm = (rol: string = 'RECEPCION') => {
     setFormData({
       email: '',
       nombre: '',
       apellido: '',
       telefono: '',
       password: '',
-      rol: 'RECEPCION',
-      sucursales: []
+      rol,
+      sucursales: [],
+      paquetePermisosId: ''
     })
+    setPermisosSeleccionados({})
   }
 
   const handleNewUsuario = () => {
     setEditingUsuario(null)
-    resetForm()
+    resetForm('RECEPCION')
     setShowModal(true)
+    if (permisosCatalogo.length > 0) {
+      const paquete = encontrarPaqueteBase('RECEPCION')
+      const paqueteId = paquete?.id || ''
+      setFormData(prev => ({
+        ...prev,
+        paquetePermisosId: paqueteId
+      }))
+      setPermisosSeleccionados(construirMapaBase('RECEPCION', paqueteId || null))
+    }
   }
 
   const getRolLabel = (rol: string) => {
@@ -254,7 +482,7 @@ export default function UsuariosPage() {
             <div className="flex items-center">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="mr-4 p-2 hover:bg-secondary-100 rounded-lg"
+                className="mr-4 p-2 rounded-lg bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -520,7 +748,7 @@ export default function UsuariosPage() {
                     </label>
                     <select
                       value={formData.rol}
-                      onChange={(e) => setFormData(prev => ({ ...prev, rol: e.target.value }))}
+                      onChange={(e) => handleRolChange(e.target.value)}
                       className="input"
                       required
                     >

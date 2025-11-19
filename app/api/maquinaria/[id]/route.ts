@@ -43,7 +43,45 @@ export async function GET(
               select: {
                 id: true,
                 nombre: true,
-                elementos: true
+                elementos: true,
+                analitosAsignados: {
+                  include: {
+                    analito: {
+                      select: {
+                        id: true,
+                        nombre: true,
+                        unidad: true,
+                        descripcion: true
+                      }
+                    }
+                  }
+                },
+                categorias: {
+                  include: {
+                    categoria: {
+                      select: {
+                        id: true,
+                        nombre: true,
+                        descripcion: true,
+                        analitos: {
+                          include: {
+                            analito: {
+                              select: {
+                                id: true,
+                                nombre: true,
+                                unidad: true,
+                                descripcion: true
+                              }
+                            }
+                          },
+                          orderBy: {
+                            orden: 'asc'
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
               }
             }
           }

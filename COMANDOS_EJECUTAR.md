@@ -72,3 +72,7 @@ Después de ejecutar las migraciones, verifica en pgAdmin 4:
 - Verifica las credenciales en `.env.local`
 - Asegúrate de que PostgreSQL esté ejecutándose
 
+
+
+
+

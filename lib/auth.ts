@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import { prisma } from './prisma'
+import { ensurePermissionsCatalog, getEffectivePermissionsForUser } from './permissions-service'
 import { Rol } from '@prisma/client'
 import { SignJWT, jwtVerify } from 'jose'
 
@@ -12,6 +13,8 @@ export interface JWTPayload {
   email: string
   rol: Rol
   sucursales: string[]
+  permisos: string[]
+  paquetePermisosId?: string | null
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -40,7 +43,9 @@ export async function verifyTokenEdge(token: string): Promise<JWTPayload | null>
       userId: payload.userId as string,
       email: payload.email as string,
       rol: payload.rol as Rol,
-      sucursales: (payload.sucursales as string[]) || []
+      sucursales: (payload.sucursales as string[]) || [],
+      permisos: (payload.permisos as string[]) || [],
+      paquetePermisosId: (payload.paquetePermisosId as string) || null
     }
   } catch (error: any) {
     return null
@@ -57,6 +62,8 @@ export function verifyToken(token: string): JWTPayload | null {
 }
 
 export async function authenticateUser(email: string, password: string) {
+  await ensurePermissionsCatalog()
+
   const user = await prisma.usuario.findUnique({
     where: { email },
     include: {
@@ -86,11 +93,15 @@ export async function authenticateUser(email: string, password: string) {
     }
   })
 
+  const permisos = await getEffectivePermissionsForUser(user.id)
+
   const tokenPayload: JWTPayload = {
     userId: user.id,
     email: user.email,
     rol: user.rol,
-    sucursales: user.sucursales.map(us => us.sucursalId)
+    sucursales: user.sucursales.map(us => us.sucursalId),
+    permisos,
+    paquetePermisosId: user.paquetePermisosId
   }
 
   return {
@@ -103,7 +114,9 @@ export async function authenticateUser(email: string, password: string) {
       sucursales: user.sucursales.map(us => ({
         id: us.sucursal.id,
         nombre: us.sucursal.nombre
-      }))
+      })),
+      permisos,
+      paquetePermisosId: user.paquetePermisosId
     },
     token: generateToken(tokenPayload)
   }
@@ -122,6 +135,20 @@ export async function getUserFromToken(token: string) {
         include: {
           sucursal: true
         }
+      },
+      paquetePermisos: {
+        include: {
+          permisos: {
+            include: {
+              permiso: true
+            }
+          }
+        }
+      },
+      permisosPersonalizados: {
+        include: {
+          permiso: true
+        }
       }
     }
   })
@@ -129,6 +156,8 @@ export async function getUserFromToken(token: string) {
   if (!user || !user.activo) {
     throw new Error('Usuario no encontrado o inactivo')
   }
+
+  const permisos = await getEffectivePermissionsForUser(user.id)
 
   return {
     id: user.id,
@@ -139,7 +168,9 @@ export async function getUserFromToken(token: string) {
     sucursales: user.sucursales.map(us => ({
       id: us.sucursal.id,
       nombre: us.sucursal.nombre
-    }))
+    })),
+    permisos,
+    paquetePermisosId: user.paquetePermisosId
   }
 }
 

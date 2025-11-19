@@ -63,6 +63,46 @@ interface TipoPrueba {
   elementos: string[]
 }
 
+interface UsuarioActual {
+  id: string
+  nombre: string
+  apellido: string
+  rol: string
+  permisos: string[]
+}
+
+type FormState = {
+  clienteId: string
+  sucursalId: string
+  tipoPruebaId: string
+  elementos: string[]
+  observaciones: string
+  asignacionAutomatica: boolean
+}
+
+type NewClientState = {
+  nombre: string
+  apellido: string
+  email: string
+  telefono: string
+}
+
+const createInitialFormState = (): FormState => ({
+  clienteId: '',
+  sucursalId: '',
+  tipoPruebaId: '',
+  elementos: [],
+  observaciones: '',
+  asignacionAutomatica: false
+})
+
+const createInitialNewClientState = (): NewClientState => ({
+  nombre: '',
+  apellido: '',
+  email: '',
+  telefono: ''
+})
+
 export default function ComandasPage() {
   const [comandas, setComandas] = useState<Comanda[]>([])
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -73,21 +113,46 @@ export default function ComandasPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterEstado, setFilterEstado] = useState('')
   const [filterSucursal, setFilterSucursal] = useState('')
+  const [currentUser, setCurrentUser] = useState<UsuarioActual | null>(null)
   const router = useRouter()
 
-  // Formulario de nueva comanda
-  const [formData, setFormData] = useState({
-    clienteId: '',
-    sucursalId: '',
-    tipoPruebaId: '',
-    elementos: [] as string[],
-    observaciones: '',
-    asignacionAutomatica: false
-  })
+  const [formData, setFormData] = useState<FormState>(() => createInitialFormState())
+  const [showNewClientForm, setShowNewClientForm] = useState(false)
+  const [newClientData, setNewClientData] = useState<NewClientState>(() => createInitialNewClientState())
+  const [creatingClient, setCreatingClient] = useState(false)
 
+  const canRegisterClients = currentUser?.permisos?.includes('clientes.editar') ?? false
+
+  // Formulario de nueva comanda
   useEffect(() => {
     loadData()
   }, [])
+
+  useEffect(() => {
+    if (clientes.length === 0 && canRegisterClients) {
+      setShowNewClientForm(true)
+    }
+  }, [clientes.length, canRegisterClients])
+
+  const resetFormState = () => {
+    setFormData(createInitialFormState())
+    setNewClientData(createInitialNewClientState())
+    if (clientes.length === 0 && canRegisterClients) {
+      setShowNewClientForm(true)
+    } else {
+      setShowNewClientForm(false)
+    }
+  }
+
+  const openModal = () => {
+    resetFormState()
+    setShowModal(true)
+  }
+
+  const closeModal = () => {
+    resetFormState()
+    setShowModal(false)
+  }
 
   const loadData = async () => {
     try {
@@ -97,7 +162,7 @@ export default function ComandasPage() {
         return
       }
 
-      const [comandasRes, clientesRes, sucursalesRes, tiposRes] = await Promise.all([
+      const [comandasRes, clientesRes, sucursalesRes, tiposRes, meRes] = await Promise.all([
         fetch('/api/comandas', {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
@@ -109,15 +174,33 @@ export default function ComandasPage() {
         }),
         fetch('/api/tipos-prueba', {
           headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch('/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
         })
       ])
 
-      const [comandasData, clientesData, sucursalesData, tiposData] = await Promise.all([
+      const [comandasData, clientesData, sucursalesData, tiposData, meData] = await Promise.all([
         comandasRes.json(),
         clientesRes.json(),
         sucursalesRes.json(),
-        tiposRes.json()
+        tiposRes.json(),
+        meRes.json()
       ])
+
+      if (!meRes.ok || !meData.success) {
+        toast.error(meData.error || 'Sesión inválida, inicia sesión nuevamente')
+        router.push('/')
+        return
+      }
+
+      setCurrentUser({
+        id: meData.data.id,
+        nombre: meData.data.nombre,
+        apellido: meData.data.apellido,
+        rol: meData.data.rol,
+        permisos: meData.data.permisos || []
+      })
 
       if (comandasData.success) setComandas(comandasData.data)
       if (clientesData.success) setClientes(clientesData.data)
@@ -128,6 +211,57 @@ export default function ComandasPage() {
       toast.error('Error al cargar datos')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCreateCliente = async () => {
+    if (!canRegisterClients) {
+      toast.error('No tienes permisos para registrar clientes')
+      return
+    }
+
+    if (!newClientData.nombre.trim() || !newClientData.apellido.trim() || !newClientData.email.trim()) {
+      toast.error('Nombre, apellido y email son obligatorios')
+      return
+    }
+
+    try {
+      setCreatingClient(true)
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/clientes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          nombre: newClientData.nombre.trim(),
+          apellido: newClientData.apellido.trim(),
+          email: newClientData.email.trim(),
+          telefono: newClientData.telefono.trim() || undefined
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('Cliente registrado correctamente')
+        setClientes(prev => {
+          const updated = [...prev, data.data]
+          return updated.sort((a, b) =>
+            `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`, 'es', { sensitivity: 'base' })
+          )
+        })
+        setFormData(prev => ({ ...prev, clienteId: data.data.id }))
+        setNewClientData(createInitialNewClientState())
+        setShowNewClientForm(false)
+      } else {
+        toast.error(data.error || 'Error al registrar cliente')
+      }
+    } catch (error) {
+      toast.error('Error de conexión')
+    } finally {
+      setCreatingClient(false)
     }
   }
 
@@ -154,15 +288,7 @@ export default function ComandasPage() {
 
       if (data.success) {
         toast.success('Comanda creada exitosamente')
-        setShowModal(false)
-        setFormData({
-          clienteId: '',
-          sucursalId: '',
-          tipoPruebaId: '',
-          elementos: [],
-          observaciones: '',
-          asignacionAutomatica: false
-        })
+        closeModal()
         loadData()
       } else {
         toast.error(data.error || 'Error al crear comanda')
@@ -231,7 +357,7 @@ export default function ComandasPage() {
             <div className="flex items-center">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="mr-4 p-2 hover:bg-secondary-100 rounded-lg"
+                className="mr-4 p-2 rounded-lg bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -241,7 +367,7 @@ export default function ComandasPage() {
             </div>
             
             <button
-              onClick={() => setShowModal(true)}
+              onClick={openModal}
               className="btn btn-primary"
             >
               <PlusIcon className="h-5 w-5 mr-2" />
@@ -397,7 +523,7 @@ export default function ComandasPage() {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold text-secondary-900">Nueva Comanda</h2>
                 <button
-                  onClick={() => setShowModal(false)}
+                  onClick={closeModal}
                   className="text-secondary-400 hover:text-secondary-600"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -425,6 +551,100 @@ export default function ComandasPage() {
                         </option>
                       ))}
                     </select>
+                    {canRegisterClients ? (
+                      <>
+                        {clientes.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowNewClientForm(prev => !prev)}
+                            className="mt-3 text-sm text-primary-600 hover:text-primary-800"
+                          >
+                            {showNewClientForm ? 'Ocultar formulario de nuevo cliente' : 'Registrar nuevo cliente'}
+                          </button>
+                        )}
+
+                        {(showNewClientForm || clientes.length === 0) && (
+                          <div className="mt-4 space-y-4 rounded-lg border border-secondary-200 bg-secondary-50 p-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                                  Nombre *
+                                </label>
+                                <input
+                                  type="text"
+                                  value={newClientData.nombre}
+                                  onChange={(e) => setNewClientData(prev => ({ ...prev, nombre: e.target.value }))}
+                                  className="input"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                                  Apellido *
+                                </label>
+                                <input
+                                  type="text"
+                                  value={newClientData.apellido}
+                                  onChange={(e) => setNewClientData(prev => ({ ...prev, apellido: e.target.value }))}
+                                  className="input"
+                                />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                                  Email *
+                                </label>
+                                <input
+                                  type="email"
+                                  value={newClientData.email}
+                                  onChange={(e) => setNewClientData(prev => ({ ...prev, email: e.target.value }))}
+                                  className="input"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                                  Teléfono
+                                </label>
+                                <input
+                                  type="tel"
+                                  value={newClientData.telefono}
+                                  onChange={(e) => setNewClientData(prev => ({ ...prev, telefono: e.target.value }))}
+                                  className="input"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex justify-end space-x-3">
+                              {clientes.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setShowNewClientForm(false)
+                                    setNewClientData(createInitialNewClientState())
+                                  }}
+                                  className="btn btn-secondary btn-sm"
+                                >
+                                  Cancelar
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={handleCreateCliente}
+                                className="btn btn-primary btn-sm"
+                                disabled={creatingClient}
+                              >
+                                {creatingClient ? 'Registrando...' : 'Registrar Cliente'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      clientes.length === 0 && (
+                        <p className="mt-3 text-sm text-danger-600">
+                          No hay clientes disponibles y no tienes permisos para registrarlos.
+                        </p>
+                      )
+                    )}
                   </div>
 
                   <div>
@@ -523,7 +743,7 @@ export default function ComandasPage() {
                 <div className="flex justify-end space-x-4">
                   <button
                     type="button"
-                    onClick={() => setShowModal(false)}
+                    onClick={closeModal}
                     className="btn btn-secondary"
                   >
                     Cancelar

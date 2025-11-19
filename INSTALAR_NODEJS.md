@@ -83,3 +83,7 @@ Si crees que Node.js ya está instalado pero no se reconoce:
 
 El error de Visual Studio Installer que viste no afecta la instalación de Node.js. Puedes ignorarlo o cerrar Visual Studio Installer si está abierto.
 
+
+
+
+

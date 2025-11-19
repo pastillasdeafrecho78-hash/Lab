@@ -47,6 +47,7 @@ model Usuario {
   ultimoAcceso      DateTime?
   ipUltimoAcceso    String?
   dispositivoId     String?
+  paquetePermisosId String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -57,6 +58,8 @@ model Usuario {
   mensajesEnviados  Mensaje[] @relation("MensajeEnviadoPor")
   resultados        Resultado[]
   auditoria         Auditoria[]
+  paquetePermisos   PaquetePermisos? @relation(fields: [paquetePermisosId], references: [id])
+  permisosPersonalizados UsuarioPermiso[]
 
   @@map("usuarios")
 }
@@ -125,6 +128,8 @@ model TipoPrueba {
   // Relaciones
   comandas    Comanda[]
   maquinaria  PruebaMaquinaria[]
+  categorias  TipoPruebaCategoria[]
+  analitosAsignados TipoPruebaAnalito[]
 
   @@map("tipos_prueba")
 }
@@ -245,4 +250,131 @@ model Auditoria {
   usuario     Usuario  @relation(fields: [usuarioId], references: [id])
 
   @@map("auditoria")
+}
+
+model Permiso {
+  id          String   @id @default(cuid())
+  clave       String   @unique
+  nombre      String
+  descripcion String?
+  categoria   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  paquetes    PaquetePermisoDetalle[]
+  usuarios    UsuarioPermiso[]
+
+  @@map("permisos")
+}
+
+model PaquetePermisos {
+  id            String   @id @default(cuid())
+  nombre        String
+  descripcion   String?
+  rolBase       Rol
+  esPersonalizado Boolean @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  permisos      PaquetePermisoDetalle[]
+  usuarios      Usuario[]
+
+  @@map("paquetes_permisos")
+  @@unique([nombre])
+}
+
+model PaquetePermisoDetalle {
+  id         String @id @default(cuid())
+  paqueteId  String
+  permisoId  String
+  permitido  Boolean @default(true)
+  createdAt  DateTime @default(now())
+
+  paquete    PaquetePermisos @relation(fields: [paqueteId], references: [id], onDelete: Cascade)
+  permiso    Permiso          @relation(fields: [permisoId], references: [id], onDelete: Cascade)
+
+  @@unique([paqueteId, permisoId])
+  @@map("paquetes_permisos_detalle")
+}
+
+model UsuarioPermiso {
+  id         String @id @default(cuid())
+  usuarioId  String
+  permisoId  String
+  permitido  Boolean
+  createdAt  DateTime @default(now())
+
+  usuario    Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  permiso    Permiso  @relation(fields: [permisoId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, permisoId])
+  @@map("usuario_permisos")
+}
+
+model Analito {
+  id          String   @id @default(cuid())
+  nombre      String   @unique
+  descripcion String?
+  unidad      String?
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  categorias  CategoriaAnalitoDetalle[]
+  tipoPruebas TipoPruebaAnalito[]
+
+  @@map("analitos")
+}
+
+model CategoriaAnalito {
+  id          String   @id @default(cuid())
+  nombre      String   @unique
+  descripcion String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  analitos    CategoriaAnalitoDetalle[]
+  tipoPruebas TipoPruebaCategoria[]
+
+  @@map("categorias_analito")
+}
+
+model CategoriaAnalitoDetalle {
+  id          String   @id @default(cuid())
+  categoriaId String
+  analitoId   String
+  orden       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  categoria   CategoriaAnalito @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  analito     Analito          @relation(fields: [analitoId], references: [id], onDelete: Cascade)
+
+  @@unique([categoriaId, analitoId])
+  @@map("categoria_analito_detalle")
+}
+
+model TipoPruebaAnalito {
+  id           String   @id @default(cuid())
+  tipoPruebaId String
+  analitoId    String
+  createdAt    DateTime @default(now())
+
+  tipoPrueba   TipoPrueba @relation(fields: [tipoPruebaId], references: [id], onDelete: Cascade)
+  analito      Analito    @relation(fields: [analitoId], references: [id], onDelete: Cascade)
+
+  @@unique([tipoPruebaId, analitoId])
+  @@map("tipo_prueba_analitos")
+}
+
+model TipoPruebaCategoria {
+  id           String   @id @default(cuid())
+  tipoPruebaId String
+  categoriaId  String
+  createdAt    DateTime @default(now())
+
+  tipoPrueba   TipoPrueba       @relation(fields: [tipoPruebaId], references: [id], onDelete: Cascade)
+  categoria    CategoriaAnalito @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+
+  @@unique([tipoPruebaId, categoriaId])
+  @@map("tipo_prueba_categorias")
 }
