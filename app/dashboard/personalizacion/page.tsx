@@ -603,43 +603,6 @@ export default function PersonalizacionPage() {
                       </div>
                     </div>
 
-                    {/* Header */}
-                    <div 
-                      className="p-4 bg-gray-200 rounded border border-gray-300 cursor-pointer hover:border-gray-400 transition-colors"
-                      onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect()
-                        setPopoverPosition(calculatePopoverPosition(rect))
-                        setActiveColorPicker('grayBase')
-                      }}
-                      title="Click para editar escala de grises"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-primary">Header (gray-100)</span>
-                        <div className="flex gap-1">
-                          {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((shade) => (
-                            <div
-                              key={shade}
-                              className="w-6 h-6 rounded border border-gray-300"
-                              style={{ backgroundColor: `rgb(var(--color-gray-${shade}))` }}
-                              title={`gray-${shade}`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <p 
-                        className="text-xs font-medium text-primary" 
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          const rect = e.currentTarget.getBoundingClientRect()
-                          setPopoverPosition(calculatePopoverPosition(rect))
-                          setActiveColorPicker('textPrimary')
-                        }}
-                        title="Click para editar color de texto principal"
-                      >
-                        Título del Header
-                      </p>
-                    </div>
-
                     {/* Card */}
                     <div 
                       className="p-4 bg-gray-200 rounded border border-gray-300 cursor-pointer hover:border-gray-400 transition-colors"
