@@ -9,7 +9,8 @@ import {
   ChatBubbleLeftRightIcon,
   UserGroupIcon,
   ChartBarIcon,
-  UserIcon
+  UserIcon,
+  PaintBrushIcon
 } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 import { getAuthToken, getAuthHeaders, removeAuthToken } from '@/lib/api-helpers'
@@ -26,37 +27,99 @@ interface Usuario {
   }>
 }
 
+interface Estadisticas {
+  comandasHoy: number
+  sucursalesActivas: number
+  equiposActivos: number
+  mensajesNoLeidos: number
+}
+
 export default function DashboardPage() {
   const [usuario, setUsuario] = useState<Usuario | null>(null)
+  const [estadisticas, setEstadisticas] = useState<Estadisticas>({
+    comandasHoy: 0,
+    sucursalesActivas: 0,
+    equiposActivos: 0,
+    mensajesNoLeidos: 0
+  })
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    // Usar el helper para obtener el token de múltiples fuentes
-    const token = getAuthToken()
-    
-    if (!token) {
-      router.push('/')
-      return
+    const loadData = async () => {
+      const token = getAuthToken()
+      
+      if (!token) {
+        router.push('/')
+        return
+      }
+
+      const headers = getAuthHeaders()
+
+      try {
+        // Cargar usuario
+        const usuarioRes = await fetch('/api/auth/me', { headers })
+        const usuarioData = await usuarioRes.json()
+
+        if (!usuarioData.success) {
+          toast.error('Error al cargar usuario')
+          router.push('/')
+          return
+        }
+
+        setUsuario(usuarioData.data)
+
+        // Cargar estadísticas
+        const hoy = new Date()
+        hoy.setHours(0, 0, 0, 0)
+
+        const [comandasRes, sucursalesRes, maquinariaRes, mensajesRes] = await Promise.all([
+          fetch('/api/comandas?limit=1000', { headers }),
+          fetch('/api/sucursales', { headers }),
+          fetch('/api/maquinaria?estado=activa', { headers }),
+          fetch('/api/mensajes?limit=1000', { headers })
+        ])
+
+        const [comandasData, sucursalesData, maquinariaData, mensajesData] = await Promise.all([
+          comandasRes.json(),
+          sucursalesRes.json(),
+          maquinariaRes.json(),
+          mensajesRes.json()
+        ])
+
+        // Filtrar comandas del día de hoy
+        const comandasHoy = comandasData.success 
+          ? (comandasData.data || []).filter((c: any) => {
+              const fechaCreacion = new Date(c.fechaCreacion)
+              return fechaCreacion >= hoy && !c.archivada
+            }).length
+          : 0
+
+        // Filtrar mensajes no leídos (solo los que el usuario es destinatario)
+        const userId = usuarioData.data.id
+        const mensajesNoLeidos = mensajesData.success
+          ? (mensajesData.data || []).filter((m: any) => 
+              !m.leido && m.destinatarioId === userId
+            ).length
+          : 0
+
+        setEstadisticas({
+          comandasHoy,
+          sucursalesActivas: sucursalesData.success 
+            ? (sucursalesData.data || []).filter((s: any) => s.activa)?.length || 0
+            : 0,
+          equiposActivos: maquinariaData.success ? (maquinariaData.data?.length || 0) : 0,
+          mensajesNoLeidos
+        })
+      } catch (error) {
+        console.error('Error al cargar datos:', error)
+        toast.error('Error al cargar estadísticas')
+      } finally {
+        setLoading(false)
+      }
     }
 
-    fetch('/api/auth/me', {
-      headers: getAuthHeaders()
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        setUsuario(data.data)
-      } else {
-        toast.error('Error al cargar usuario')
-        router.push('/')
-      }
-    })
-    .catch(() => {
-      toast.error('Error de conexión')
-      router.push('/')
-    })
-    .finally(() => setLoading(false))
+    loadData()
   }, [router])
 
   const handleLogout = () => {
@@ -92,7 +155,7 @@ export default function DashboardPage() {
       description: 'Comunicación interna',
       icon: ChatBubbleLeftRightIcon,
       href: '/dashboard/chat',
-      color: 'bg-secondary-500'
+      color: 'bg-gray-500'
     },
     {
       title: 'Clientes',
@@ -114,12 +177,19 @@ export default function DashboardPage() {
       icon: ChartBarIcon,
       href: '/dashboard/reportes',
       color: 'bg-indigo-500'
+    },
+    {
+      title: 'Personalización',
+      description: 'Personalizar colores y tema',
+      icon: PaintBrushIcon,
+      href: '/dashboard/personalizacion',
+      color: 'bg-purple-500'
     }
   ]
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-secondary-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
       </div>
     )
@@ -130,9 +200,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-secondary-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-secondary-200">
+      <header className="bg-gray-100 shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -141,15 +211,15 @@ export default function DashboardPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                 </svg>
               </div>
-              <h1 className="text-xl font-semibold text-secondary-900">Laboratorio Comandas</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Laboratorio Comandas</h1>
             </div>
             
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <p className="text-sm font-medium text-secondary-900">
+                <p className="text-sm font-medium text-gray-900">
                   {usuario.nombre} {usuario.apellido}
                 </p>
-                <p className="text-xs text-secondary-500 capitalize">
+                <p className="text-xs text-gray-500 capitalize">
                   {usuario.rol.replace('_', ' ').toLowerCase()}
                 </p>
               </div>
@@ -167,60 +237,68 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-secondary-900 mb-2">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Bienvenido, {usuario.nombre}
           </h2>
-          <p className="text-secondary-600">
+          <p className="text-gray-600">
             Gestiona tu laboratorio desde el panel de control
           </p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="card">
+          <div className="card-static">
             <div className="flex items-center">
               <div className="p-2 bg-primary-100 rounded-lg">
                 <ClipboardDocumentListIcon className="h-6 w-6 text-primary-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-secondary-600">Comandas Hoy</p>
-                <p className="text-2xl font-bold text-secondary-900">12</p>
+                <p className="text-sm font-medium text-gray-600">Comandas Hoy</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {loading ? '...' : estadisticas.comandasHoy}
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="card">
+          <div className="card-static">
             <div className="flex items-center">
               <div className="p-2 bg-success-100 rounded-lg">
                 <BuildingOfficeIcon className="h-6 w-6 text-success-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-secondary-600">Sucursales</p>
-                <p className="text-2xl font-bold text-secondary-900">{usuario.sucursales.length}</p>
+                <p className="text-sm font-medium text-gray-600">Sucursales</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {loading ? '...' : estadisticas.sucursalesActivas}
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="card">
+          <div className="card-static">
             <div className="flex items-center">
               <div className="p-2 bg-warning-100 rounded-lg">
                 <CpuChipIcon className="h-6 w-6 text-warning-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-secondary-600">Equipos Activos</p>
-                <p className="text-2xl font-bold text-secondary-900">8</p>
+                <p className="text-sm font-medium text-gray-600">Equipos Activos</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {loading ? '...' : estadisticas.equiposActivos}
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="card">
+          <div className="card-static">
             <div className="flex items-center">
               <div className="p-2 bg-danger-100 rounded-lg">
                 <ChatBubbleLeftRightIcon className="h-6 w-6 text-danger-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-secondary-600">Mensajes</p>
-                <p className="text-2xl font-bold text-secondary-900">3</p>
+                <p className="text-sm font-medium text-gray-600">Mensajes</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {loading ? '...' : estadisticas.mensajesNoLeidos}
+                </p>
               </div>
             </div>
           </div>
@@ -241,10 +319,10 @@ export default function DashboardPage() {
                     <Icon className="h-6 w-6 text-white" />
                   </div>
                   <div className="ml-4 flex-1">
-                    <h3 className="text-lg font-semibold text-secondary-900 mb-1">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
                       {item.title}
                     </h3>
-                    <p className="text-sm text-secondary-600">
+                    <p className="text-sm text-gray-600">
                       {item.description}
                     </p>
                   </div>

@@ -307,9 +307,9 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
       PENDIENTE: 'text-warning-600',
       EN_PROCESO: 'text-primary-600',
       COMPLETADA: 'text-success-600',
-      ENTREGADA: 'text-secondary-600'
+      ENTREGADA: 'text-gray-600'
     }
-    return colors[estado as keyof typeof colors] || 'text-secondary-600'
+    return colors[estado as keyof typeof colors] || 'text-gray-600'
   }
 
   const getEstadoLabel = (estado: string) => {
@@ -447,7 +447,7 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-secondary-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
       </div>
     )
@@ -455,9 +455,9 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
 
   if (!comanda) {
     return (
-      <div className="min-h-screen bg-secondary-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-secondary-900 mb-4">Comanda no encontrada</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Comanda no encontrada</h2>
           <button
             onClick={() => router.push('/dashboard/comandas')}
             className="btn btn-primary"
@@ -470,23 +470,23 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
   }
 
   return (
-    <div className="min-h-screen bg-secondary-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-secondary-200">
+      <header className="bg-gray-100 shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <button
                 onClick={() => router.push('/dashboard/comandas')}
-                className="mr-4 p-2 rounded-lg bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
+                className="mr-4 p-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300"
               >
                 <ArrowLeftIcon className="h-5 w-5" />
               </button>
               <div>
-                <h1 className="text-xl font-semibold text-secondary-900">
+                <h1 className="text-xl font-semibold text-gray-900">
                   {comanda.numeroComanda}
                 </h1>
-                <p className="text-sm text-secondary-500">
+                <p className="text-sm text-gray-500">
                   {comanda.cliente.nombre} {comanda.cliente.apellido}
                 </p>
               </div>
@@ -532,7 +532,7 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
                   onClick={() => handleEstadoChange('ENTREGADA')}
                   className={`btn btn-sm ${
                     comanda.estado === 'ENTREGADA' 
-                      ? 'bg-secondary-600 text-white' 
+                      ? 'bg-gray-600 text-white' 
                       : 'btn-secondary'
                   }`}
                   disabled={comanda.estado === 'ENTREGADA'}
@@ -572,29 +572,29 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
             {/* Información del Cliente */}
             <div className="card">
               <div className="card-header">
-                <h3 className="text-lg font-semibold text-secondary-900">Información del Cliente</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Información del Cliente</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-secondary-500">Nombre Completo</label>
-                  <p className="text-secondary-900">
+                  <label className="text-sm font-medium text-gray-500">Nombre Completo</label>
+                  <p className="text-gray-900">
                     {comanda.cliente.nombre} {comanda.cliente.apellido}
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-secondary-500">Email</label>
-                  <p className="text-secondary-900">{comanda.cliente.email}</p>
+                  <label className="text-sm font-medium text-gray-500">Email</label>
+                  <p className="text-gray-900">{comanda.cliente.email}</p>
                 </div>
                 {comanda.cliente.telefono && (
                   <div>
-                    <label className="text-sm font-medium text-secondary-500">Teléfono</label>
-                    <p className="text-secondary-900">{comanda.cliente.telefono}</p>
+                    <label className="text-sm font-medium text-gray-500">Teléfono</label>
+                    <p className="text-gray-900">{comanda.cliente.telefono}</p>
                   </div>
                 )}
                 {comanda.cliente.fechaNacimiento && (
                   <div>
-                    <label className="text-sm font-medium text-secondary-500">Fecha de Nacimiento</label>
-                    <p className="text-secondary-900">
+                    <label className="text-sm font-medium text-gray-500">Fecha de Nacimiento</label>
+                    <p className="text-gray-900">
                       {new Date(comanda.cliente.fechaNacimiento).toLocaleDateString('es-ES')}
                     </p>
                   </div>
@@ -605,15 +605,15 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
             {/* Información de la Prueba */}
             <div className="card">
               <div className="card-header">
-                <h3 className="text-lg font-semibold text-secondary-900">Información de la Prueba</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Información de la Prueba</h3>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-secondary-500">Tipo de Prueba</label>
-                  <p className="text-secondary-900">{comanda.tipoPrueba.nombre}</p>
+                  <label className="text-sm font-medium text-gray-500">Tipo de Prueba</label>
+                  <p className="text-gray-900">{comanda.tipoPrueba.nombre}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-secondary-500">Elementos a Analizar</label>
+                  <label className="text-sm font-medium text-gray-500">Elementos a Analizar</label>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {comanda.elementos.map(elemento => (
                       <span key={elemento} className="badge badge-primary">
@@ -624,8 +624,8 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
                 </div>
                 {comanda.observaciones && (
                   <div>
-                    <label className="text-sm font-medium text-secondary-500">Observaciones</label>
-                    <p className="text-secondary-900">{comanda.observaciones}</p>
+                    <label className="text-sm font-medium text-gray-500">Observaciones</label>
+                    <p className="text-gray-900">{comanda.observaciones}</p>
                   </div>
                 )}
               </div>
@@ -635,39 +635,39 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
             {comanda.resultados.length > 0 && (
               <div className="card">
                 <div className="card-header">
-                  <h3 className="text-lg font-semibold text-secondary-900">Resultados</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Resultados</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-secondary-200">
-                    <thead className="bg-secondary-50">
+                    <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Elemento
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Valor
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Rango Normal
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Registrado Por
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-secondary-200">
+                    <tbody className="bg-gray-100 divide-y divide-secondary-200">
                       {comanda.resultados.map((resultado) => (
                         <tr key={resultado.id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-secondary-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {resultado.elemento.replace('_', ' ')}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {resultado.valor} {resultado.unidad}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {resultado.rangoNormal}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {resultado.registradoPor.nombre} {resultado.registradoPor.apellido}
                           </td>
                         </tr>
@@ -684,41 +684,41 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
             {/* Estado y Fechas */}
             <div className="card">
               <div className="card-header">
-                <h3 className="text-lg font-semibold text-secondary-900">Estado y Fechas</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Estado y Fechas</h3>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-secondary-500">Estado Actual</label>
+                  <label className="text-sm font-medium text-gray-500">Estado Actual</label>
                   <p className={`font-semibold ${getEstadoColor(comanda.estado)}`}>
                     {getEstadoLabel(comanda.estado)}
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-secondary-500">Fecha de Creación</label>
-                  <p className="text-secondary-900">
+                  <label className="text-sm font-medium text-gray-500">Fecha de Creación</label>
+                  <p className="text-gray-900">
                     {new Date(comanda.fechaCreacion).toLocaleString('es-ES')}
                   </p>
                 </div>
                 {comanda.fechaAsignacion && (
                   <div>
-                    <label className="text-sm font-medium text-secondary-500">Fecha de Asignación</label>
-                    <p className="text-secondary-900">
+                    <label className="text-sm font-medium text-gray-500">Fecha de Asignación</label>
+                    <p className="text-gray-900">
                       {new Date(comanda.fechaAsignacion).toLocaleString('es-ES')}
                     </p>
                   </div>
                 )}
                 {comanda.fechaCompletado && (
                   <div>
-                    <label className="text-sm font-medium text-secondary-500">Fecha de Completado</label>
-                    <p className="text-secondary-900">
+                    <label className="text-sm font-medium text-gray-500">Fecha de Completado</label>
+                    <p className="text-gray-900">
                       {new Date(comanda.fechaCompletado).toLocaleString('es-ES')}
                     </p>
                   </div>
                 )}
                 {comanda.fechaEntrega && (
                   <div>
-                    <label className="text-sm font-medium text-secondary-500">Fecha de Entrega</label>
-                    <p className="text-secondary-900">
+                    <label className="text-sm font-medium text-gray-500">Fecha de Entrega</label>
+                    <p className="text-gray-900">
                       {new Date(comanda.fechaEntrega).toLocaleString('es-ES')}
                     </p>
                   </div>
@@ -729,20 +729,20 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
             {/* Información de la Sucursal */}
             <div className="card">
               <div className="card-header">
-                <h3 className="text-lg font-semibold text-secondary-900">Sucursal</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Sucursal</h3>
               </div>
               <div className="space-y-2">
                 <div>
-                  <label className="text-sm font-medium text-secondary-500">Nombre</label>
-                  <p className="text-secondary-900">{comanda.sucursal.nombre}</p>
+                  <label className="text-sm font-medium text-gray-500">Nombre</label>
+                  <p className="text-gray-900">{comanda.sucursal.nombre}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-secondary-500">Dirección</label>
-                  <p className="text-secondary-900">{comanda.sucursal.direccion}</p>
+                  <label className="text-sm font-medium text-gray-500">Dirección</label>
+                  <p className="text-gray-900">{comanda.sucursal.direccion}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-secondary-500">Teléfono</label>
-                  <p className="text-secondary-900">{comanda.sucursal.telefono}</p>
+                  <label className="text-sm font-medium text-gray-500">Teléfono</label>
+                  <p className="text-gray-900">{comanda.sucursal.telefono}</p>
                 </div>
               </div>
             </div>
@@ -750,19 +750,19 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
             {/* Personal */}
             <div className="card">
               <div className="card-header">
-                <h3 className="text-lg font-semibold text-secondary-900">Personal</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Personal</h3>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-secondary-500">Creado Por</label>
-                  <p className="text-secondary-900">
+                  <label className="text-sm font-medium text-gray-500">Creado Por</label>
+                  <p className="text-gray-900">
                     {comanda.creadoPor.nombre} {comanda.creadoPor.apellido}
                   </p>
                 </div>
                 {comanda.asignadoA && (
                   <div>
-                    <label className="text-sm font-medium text-secondary-500">Asignado A</label>
-                    <p className="text-secondary-900">
+                    <label className="text-sm font-medium text-gray-500">Asignado A</label>
+                    <p className="text-gray-900">
                       {comanda.asignadoA.nombre} {comanda.asignadoA.apellido}
                     </p>
                   </div>
@@ -776,7 +776,7 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
         {comanda.historial && comanda.historial.length > 0 && (
           <div className="card mt-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-secondary-900 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <ClockIcon className="h-5 w-5" />
                 Historial de Modificaciones
               </h3>
@@ -792,14 +792,14 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
                 {comanda.historial.map((cambio) => (
                   <div
                     key={cambio.id}
-                    className="border-l-4 border-primary-500 pl-4 py-2 bg-secondary-50 rounded"
+                    className="border-l-4 border-primary-500 pl-4 py-2 bg-gray-50 rounded"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-secondary-900">
+                        <p className="text-sm font-medium text-gray-900">
                           {getTipoCambioLabel(cambio.tipoCambio)}
                         </p>
-                        <p className="text-xs text-secondary-600 mt-1">{cambio.descripcion}</p>
+                        <p className="text-xs text-gray-600 mt-1">{cambio.descripcion}</p>
                         {cambio.campoAnterior && cambio.campoNuevo && (
                           <div className="mt-2 text-xs">
                             <span className="text-danger-600 line-through">{cambio.campoAnterior}</span>
@@ -809,10 +809,10 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
                         )}
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-secondary-500">
+                        <p className="text-xs text-gray-500">
                           {new Date(cambio.fechaModificacion).toLocaleString('es-ES')}
                         </p>
-                        <p className="text-xs text-secondary-400">
+                        <p className="text-xs text-gray-400">
                           {cambio.modificadoPor.nombre} {cambio.modificadoPor.apellido}
                         </p>
                       </div>
@@ -828,13 +828,13 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
       {/* Modal Editar */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto my-4">
+          <div className="bg-gray-100 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto my-4">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-secondary-900">Editar Comanda</h2>
+                <h2 className="text-xl font-semibold text-gray-900">Editar Comanda</h2>
                 <button
                   onClick={() => setShowEditModal(false)}
-                  className="text-secondary-400 hover:text-secondary-600"
+                  className="text-gray-400 hover:text-gray-600"
                 >
                   <XMarkIcon className="h-6 w-6" />
                 </button>
@@ -843,7 +843,7 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
               <div className="space-y-6">
                 {editData.estado === 'EN_PROCESO' && (
                   <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Asignar A
                     </label>
                     <select
@@ -862,7 +862,7 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Observaciones
                   </label>
                   <textarea
@@ -874,14 +874,14 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
                 </div>
 
                 {/* Sección: Modificar Categoría */}
-                <div className="border-t border-secondary-200 pt-4">
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                <div className="border-t border-gray-200 pt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Agregar Categoría de Prueba
                   </label>
                   
                   <div className="mb-3">
                     <div className="relative">
-                      <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400" />
+                      <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                       <input
                         type="text"
                         placeholder="Buscar categoría..."
@@ -892,9 +892,9 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
                     </div>
                   </div>
 
-                  <div className="max-h-48 overflow-y-auto border border-secondary-200 rounded-lg p-2 bg-secondary-50">
+                  <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-2 bg-gray-50">
                     {filteredCategorias.length === 0 ? (
-                      <p className="text-sm text-secondary-500 text-center py-4">
+                      <p className="text-sm text-gray-500 text-center py-4">
                         {categoriaSearchTerm ? 'No se encontraron categorías' : 'No hay categorías disponibles'}
                       </p>
                     ) : (
@@ -904,12 +904,12 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
                             key={categoria.id}
                             type="button"
                             onClick={() => handleCategoriaChange(categoria.id)}
-                            className="w-full text-left p-2 rounded border border-secondary-200 bg-white hover:bg-primary-50 hover:border-primary-300 transition"
+                            className="w-full text-left p-2 rounded border border-gray-200 bg-gray-100 hover:bg-primary-50 hover:border-primary-300 transition"
                           >
-                            <p className="text-sm font-medium text-secondary-900">
+                            <p className="text-sm font-medium text-gray-900">
                               {categoria.nombre}
                             </p>
-                            <p className="text-xs text-secondary-500">
+                            <p className="text-xs text-gray-500">
                               {categoria.analitos.length} parámetros
                             </p>
                           </button>
@@ -921,30 +921,30 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
 
                 {/* Sección: Parámetros Actuales */}
                 {editData.elementos.length > 0 && (
-                  <div className="border-t border-secondary-200 pt-4">
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  <div className="border-t border-gray-200 pt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Parámetros Seleccionados ({editData.elementos.length})
                     </label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-secondary-200 rounded-lg p-3 bg-secondary-50">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
                       {editData.elementos.map(elemento => {
                         const analito = analitos.find(a => a.nombre === elemento)
                         return (
                           <label
                             key={elemento}
-                            className="flex items-center gap-2 p-2 bg-white rounded border border-secondary-200 hover:bg-secondary-50 cursor-pointer"
+                            className="flex items-center gap-2 p-2 bg-gray-100 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer"
                           >
                             <input
                               type="checkbox"
                               checked={true}
                               onChange={() => toggleElemento(elemento)}
-                              className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+                              className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                             />
                             <div className="flex-1">
-                              <span className="text-sm text-secondary-700 font-medium">
+                              <span className="text-sm text-gray-700 font-medium">
                                 {elemento}
                               </span>
                               {analito?.unidad && (
-                                <span className="text-xs text-secondary-500 ml-2">
+                                <span className="text-xs text-gray-500 ml-2">
                                   ({analito.unidad})
                                 </span>
                               )}
@@ -954,37 +954,37 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
                         )
                       })}
                     </div>
-                    <p className="text-xs text-secondary-500 mt-2">
+                    <p className="text-xs text-gray-500 mt-2">
                       Desmarca un parámetro para quitarlo de la comanda
                     </p>
                   </div>
                 )}
 
                 {/* Sección: Agregar Parámetros Individuales */}
-                <div className="border-t border-secondary-200 pt-4">
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                <div className="border-t border-gray-200 pt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Agregar Parámetros Individuales
                   </label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-secondary-200 rounded-lg p-3 bg-secondary-50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
                     {analitos
                       .filter(a => !editData.elementos.includes(a.nombre))
                       .map(analito => (
                         <label
                           key={analito.id}
-                          className="flex items-center gap-2 p-2 bg-white rounded border border-secondary-200 hover:bg-primary-50 cursor-pointer"
+                          className="flex items-center gap-2 p-2 bg-gray-100 rounded border border-gray-200 hover:bg-primary-50 cursor-pointer"
                         >
                           <input
                             type="checkbox"
                             checked={false}
                             onChange={() => toggleElemento(analito.nombre)}
-                            className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+                            className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                           />
                           <div className="flex-1">
-                            <span className="text-sm text-secondary-700 font-medium">
+                            <span className="text-sm text-gray-700 font-medium">
                               {analito.nombre}
                             </span>
                             {analito.unidad && (
-                              <span className="text-xs text-secondary-500 ml-2">
+                              <span className="text-xs text-gray-500 ml-2">
                                 ({analito.unidad})
                               </span>
                             )}

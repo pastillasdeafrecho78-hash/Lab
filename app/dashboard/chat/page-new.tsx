@@ -18,7 +18,6 @@ import {
 } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 import { getAuthToken, getAuthHeaders } from '@/lib/api-helpers'
-import { applyThemeColors, getThemeColors } from '@/lib/theme'
 
 interface Usuario {
   id: string
@@ -112,8 +111,6 @@ export default function ChatPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Aplicar colores personalizados al cargar
-    applyThemeColors(getThemeColors())
     loadData()
   }, [])
 
@@ -394,8 +391,8 @@ export default function ChatPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen bg-[#36393f] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#5865f2]"></div>
       </div>
     )
   }
@@ -405,57 +402,57 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-900 overflow-hidden">
+    <div className="flex h-screen bg-[#36393f] text-[#dcddde] overflow-hidden">
       {/* Sidebar Izquierda - Categorías */}
-      <div className="w-16 bg-gray-800 flex flex-col items-center py-4 space-y-4">
+      <div className="w-16 bg-[#2f3136] flex flex-col items-center py-4 space-y-4">
         <button
           onClick={() => router.push('/dashboard')}
-          className="w-12 h-12 rounded-lg bg-primary-600 flex items-center justify-center hover:bg-primary-700 transition"
+          className="w-12 h-12 rounded-lg bg-[#5865f2] flex items-center justify-center hover:bg-[#4752c4] transition"
           title="Volver al Dashboard"
         >
           <UserGroupIcon className="h-6 w-6 text-white" />
         </button>
         
-        <div className="w-12 h-12 rounded-lg bg-primary-600 flex items-center justify-center hover:bg-primary-700 transition cursor-pointer" title="General">
+        <div className="w-12 h-12 rounded-lg bg-[#5865f2] flex items-center justify-center hover:bg-[#4752c4] transition cursor-pointer" title="General">
           <HashtagIcon className="h-6 w-6 text-white" />
         </div>
         
         {sucursales.length > 0 && (
-          <div className="w-12 h-12 rounded-lg bg-primary-600 flex items-center justify-center hover:bg-primary-700 transition cursor-pointer" title="Sucursales">
+          <div className="w-12 h-12 rounded-lg bg-[#5865f2] flex items-center justify-center hover:bg-[#4752c4] transition cursor-pointer" title="Sucursales">
             <BuildingOfficeIcon className="h-6 w-6 text-white" />
           </div>
         )}
         
         {maquinaria.length > 0 && (
-          <div className="w-12 h-12 rounded-lg bg-primary-600 flex items-center justify-center hover:bg-primary-700 transition cursor-pointer" title="Equipos">
+          <div className="w-12 h-12 rounded-lg bg-[#5865f2] flex items-center justify-center hover:bg-[#4752c4] transition cursor-pointer" title="Equipos">
             <CpuChipIcon className="h-6 w-6 text-white" />
           </div>
         )}
       </div>
 
       {/* Lista de Canales */}
-      <div className="w-60 bg-gray-700 flex flex-col">
-        <div className="p-4 border-b border-gray-600">
-          <h2 className="text-sm font-semibold text-gray-300 uppercase">Canales</h2>
+      <div className="w-60 bg-[#2f3136] flex flex-col">
+        <div className="p-4 border-b border-[#202225]">
+          <h2 className="text-sm font-semibold text-[#8e9297] uppercase">Canales</h2>
         </div>
         
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {/* Canales GENERAL */}
           {canalesPorCategoria.GENERAL.length > 0 && (
             <>
-              <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase flex items-center justify-between">
+              <div className="px-2 py-1 text-xs font-semibold text-[#8e9297] uppercase flex items-center justify-between">
                 <span>General</span>
               </div>
               {canalesPorCategoria.GENERAL.map(canal => (
                 <div
                   key={canal.id}
-                  className={`group flex items-center justify-between px-2 py-1 rounded cursor-pointer hover:bg-gray-200 ${
-                    canalSeleccionado?.id === canal.id ? 'bg-gray-200' : ''
+                  className={`group flex items-center justify-between px-2 py-1 rounded cursor-pointer hover:bg-[#3c3f44] ${
+                    canalSeleccionado?.id === canal.id ? 'bg-[#3c3f44]' : ''
                   }`}
                   onClick={() => setCanalSeleccionado(canal)}
                 >
                   <div className="flex items-center space-x-2 flex-1 min-w-0">
-                    <HashtagIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <HashtagIcon className="h-4 w-4 text-[#8e9297] flex-shrink-0" />
                     <span className="text-sm truncate">{canal.nombre}</span>
                   </div>
                   <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1">
@@ -472,7 +469,7 @@ export default function ChatPage() {
                         })
                         setShowModalEditarCanal(true)
                       }}
-                      className="p-1 hover:bg-gray-300 rounded"
+                      className="p-1 hover:bg-[#40444b] rounded"
                     >
                       <PencilIcon className="h-3 w-3" />
                     </button>
@@ -482,7 +479,7 @@ export default function ChatPage() {
                           e.stopPropagation()
                           handleEliminarCanal(canal)
                         }}
-                        className="p-1 hover:bg-gray-300 rounded text-red-400"
+                        className="p-1 hover:bg-[#40444b] rounded text-red-400"
                       >
                         <TrashIcon className="h-3 w-3" />
                       </button>
@@ -496,19 +493,19 @@ export default function ChatPage() {
           {/* Canales SUCURSAL */}
           {canalesPorCategoria.SUCURSAL.length > 0 && (
             <>
-              <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase flex items-center justify-between mt-4">
+              <div className="px-2 py-1 text-xs font-semibold text-[#8e9297] uppercase flex items-center justify-between mt-4">
                 <span>Sucursales</span>
               </div>
               {canalesPorCategoria.SUCURSAL.map(canal => (
                 <div
                   key={canal.id}
-                  className={`group flex items-center justify-between px-2 py-1 rounded cursor-pointer hover:bg-gray-200 ${
-                    canalSeleccionado?.id === canal.id ? 'bg-gray-200' : ''
+                  className={`group flex items-center justify-between px-2 py-1 rounded cursor-pointer hover:bg-[#3c3f44] ${
+                    canalSeleccionado?.id === canal.id ? 'bg-[#3c3f44]' : ''
                   }`}
                   onClick={() => setCanalSeleccionado(canal)}
                 >
                   <div className="flex items-center space-x-2 flex-1 min-w-0">
-                    <HashtagIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <HashtagIcon className="h-4 w-4 text-[#8e9297] flex-shrink-0" />
                     <span className="text-sm truncate">{canal.nombre}</span>
                   </div>
                   <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1">
@@ -525,7 +522,7 @@ export default function ChatPage() {
                         })
                         setShowModalEditarCanal(true)
                       }}
-                      className="p-1 hover:bg-gray-300 rounded"
+                      className="p-1 hover:bg-[#40444b] rounded"
                     >
                       <PencilIcon className="h-3 w-3" />
                     </button>
@@ -534,7 +531,7 @@ export default function ChatPage() {
                         e.stopPropagation()
                         handleEliminarCanal(canal)
                       }}
-                      className="p-1 hover:bg-gray-300 rounded text-red-400"
+                      className="p-1 hover:bg-[#40444b] rounded text-red-400"
                     >
                       <TrashIcon className="h-3 w-3" />
                     </button>
@@ -547,19 +544,19 @@ export default function ChatPage() {
           {/* Canales EQUIPO */}
           {canalesPorCategoria.EQUIPO.length > 0 && (
             <>
-              <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase flex items-center justify-between mt-4">
+              <div className="px-2 py-1 text-xs font-semibold text-[#8e9297] uppercase flex items-center justify-between mt-4">
                 <span>Equipos</span>
               </div>
               {canalesPorCategoria.EQUIPO.map(canal => (
                 <div
                   key={canal.id}
-                  className={`group flex items-center justify-between px-2 py-1 rounded cursor-pointer hover:bg-gray-200 ${
-                    canalSeleccionado?.id === canal.id ? 'bg-gray-200' : ''
+                  className={`group flex items-center justify-between px-2 py-1 rounded cursor-pointer hover:bg-[#3c3f44] ${
+                    canalSeleccionado?.id === canal.id ? 'bg-[#3c3f44]' : ''
                   }`}
                   onClick={() => setCanalSeleccionado(canal)}
                 >
                   <div className="flex items-center space-x-2 flex-1 min-w-0">
-                    <HashtagIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <HashtagIcon className="h-4 w-4 text-[#8e9297] flex-shrink-0" />
                     <span className="text-sm truncate">{canal.nombre}</span>
                   </div>
                   <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1">
@@ -576,7 +573,7 @@ export default function ChatPage() {
                         })
                         setShowModalEditarCanal(true)
                       }}
-                      className="p-1 hover:bg-gray-300 rounded"
+                      className="p-1 hover:bg-[#40444b] rounded"
                     >
                       <PencilIcon className="h-3 w-3" />
                     </button>
@@ -585,7 +582,7 @@ export default function ChatPage() {
                         e.stopPropagation()
                         handleEliminarCanal(canal)
                       }}
-                      className="p-1 hover:bg-gray-300 rounded text-red-400"
+                      className="p-1 hover:bg-[#40444b] rounded text-red-400"
                     >
                       <TrashIcon className="h-3 w-3" />
                     </button>
@@ -601,7 +598,7 @@ export default function ChatPage() {
               setFormCanal({ nombre: '', descripcion: '', categoria: 'GENERAL', sucursalId: '', equipoId: '' })
               setShowModalCrearCanal(true)
             }}
-            className="w-full mt-2 px-2 py-1.5 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded flex items-center space-x-2"
+            className="w-full mt-2 px-2 py-1.5 text-sm text-[#8e9297] hover:text-[#dcddde] hover:bg-[#3c3f44] rounded flex items-center space-x-2"
           >
             <PlusIcon className="h-4 w-4" />
             <span>Crear Canal</span>
@@ -614,17 +611,17 @@ export default function ChatPage() {
         {canalSeleccionado ? (
           <>
             {/* Header del canal */}
-            <div className="h-12 bg-gray-50 border-b border-gray-300 flex items-center justify-between px-4 shadow-sm">
+            <div className="h-12 bg-[#36393f] border-b border-[#202225] flex items-center justify-between px-4 shadow-sm">
               <div className="flex items-center space-x-2">
-                <HashtagIcon className="h-5 w-5 text-gray-500" />
+                <HashtagIcon className="h-5 w-5 text-[#8e9297]" />
                 <h2 className="font-semibold">{canalSeleccionado.nombre}</h2>
                 {canalSeleccionado.descripcion && (
-                  <span className="text-sm text-gray-500">- {canalSeleccionado.descripcion}</span>
+                  <span className="text-sm text-[#8e9297]">- {canalSeleccionado.descripcion}</span>
                 )}
               </div>
               <div className="flex items-center space-x-2">
-                <button className="p-1.5 hover:bg-gray-300 rounded">
-                  <Cog6ToothIcon className="h-5 w-5 text-gray-500" />
+                <button className="p-1.5 hover:bg-[#40444b] rounded">
+                  <Cog6ToothIcon className="h-5 w-5 text-[#8e9297]" />
                 </button>
               </div>
             </div>
@@ -632,8 +629,8 @@ export default function ChatPage() {
             {/* Mensajes */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {mensajes.map((mensaje) => (
-                <div key={mensaje.id} className="flex items-start space-x-3 group hover:bg-gray-200 rounded p-2 -m-2">
-                  <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center flex-shrink-0">
+                <div key={mensaje.id} className="flex items-start space-x-3 group hover:bg-[#3c3f44] rounded p-2 -m-2">
+                  <div className="w-10 h-10 rounded-full bg-[#5865f2] flex items-center justify-center flex-shrink-0">
                     <span className="text-sm font-semibold">
                       {mensaje.remitente.nombre[0]}{mensaje.remitente.apellido[0]}
                     </span>
@@ -641,7 +638,7 @@ export default function ChatPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2 mb-1">
                       <span className="font-semibold">{mensaje.remitente.nombre} {mensaje.remitente.apellido}</span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-[#8e9297]">
                         {new Date(mensaje.fechaEnvio).toLocaleString('es-ES', {
                           day: 'numeric',
                           month: 'short',
@@ -650,7 +647,7 @@ export default function ChatPage() {
                         })}
                       </span>
                       {mensaje.editado && (
-                        <span className="text-xs text-gray-500 italic">(editado)</span>
+                        <span className="text-xs text-[#8e9297] italic">(editado)</span>
                       )}
                     </div>
                     {mensaje.archivoUrl && (
@@ -666,7 +663,7 @@ export default function ChatPage() {
                             href={mensaje.archivoUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center space-x-2 p-2 bg-gray-200 rounded hover:bg-gray-300"
+                            className="flex items-center space-x-2 p-2 bg-[#40444b] rounded hover:bg-[#4a4e55]"
                           >
                             <PaperClipIcon className="h-4 w-4" />
                             <span className="text-sm">{mensaje.nombreArchivo || 'Archivo'}</span>
@@ -675,7 +672,7 @@ export default function ChatPage() {
                       </div>
                     )}
                     {mensaje.contenido && (
-                      <p className="text-gray-900">{mensaje.contenido}</p>
+                      <p className="text-[#dcddde]">{mensaje.contenido}</p>
                     )}
                   </div>
                 </div>
@@ -684,16 +681,16 @@ export default function ChatPage() {
             </div>
 
             {/* Input de mensaje */}
-            <div className="p-4 border-t border-gray-300">
+            <div className="p-4 border-t border-[#202225]">
               {archivoAdjunto && (
-                <div className="mb-2 p-2 bg-gray-200 rounded-lg flex items-center justify-between">
+                <div className="mb-2 p-2 bg-[#40444b] rounded-lg flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <PaperClipIcon className="h-4 w-4 text-[#5865f2]" />
                     <span className="text-sm truncate">{archivoAdjunto.file.name}</span>
                   </div>
                   <button
                     onClick={() => setArchivoAdjunto(null)}
-                    className="text-gray-500 hover:text-gray-900"
+                    className="text-[#8e9297] hover:text-[#dcddde]"
                   >
                     <XMarkIcon className="h-4 w-4" />
                   </button>
@@ -710,10 +707,10 @@ export default function ChatPage() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={subiendoArchivo}
-                  className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-300 rounded"
+                  className="p-2 text-[#8e9297] hover:text-[#dcddde] hover:bg-[#40444b] rounded"
                 >
                   {subiendoArchivo ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#5865f2]"></div>
                   ) : (
                     <PaperClipIcon className="h-5 w-5" />
                   )}
@@ -729,12 +726,12 @@ export default function ChatPage() {
                     }
                   }}
                   placeholder={`Mensaje #${canalSeleccionado.nombre}`}
-                  className="flex-1 bg-gray-200 text-gray-900 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="flex-1 bg-[#40444b] text-[#dcddde] px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5865f2]"
                 />
                 <button
                   onClick={sendMessage}
                   disabled={!nuevoMensaje.trim() && !archivoAdjunto}
-                  className="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 bg-[#5865f2] text-white rounded-lg hover:bg-[#4752c4] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <PaperAirplaneIcon className="h-5 w-5" />
                 </button>
@@ -744,9 +741,9 @@ export default function ChatPage() {
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <HashtagIcon className="h-16 w-16 text-gray-500 mx-auto mb-4" />
+              <HashtagIcon className="h-16 w-16 text-[#8e9297] mx-auto mb-4" />
               <h2 className="text-xl font-semibold mb-2">Selecciona un canal</h2>
-              <p className="text-gray-500">Elige un canal de la lista para comenzar a chatear</p>
+              <p className="text-[#8e9297]">Elige un canal de la lista para comenzar a chatear</p>
             </div>
           </div>
         )}
@@ -755,7 +752,7 @@ export default function ChatPage() {
       {/* Modales */}
       {showModalCrearCanal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+          <div className="bg-[#2f3136] rounded-lg p-6 w-full max-w-md">
             <h3 className="text-xl font-semibold mb-4">Crear Canal</h3>
             <div className="space-y-4">
               <div>
@@ -764,7 +761,7 @@ export default function ChatPage() {
                   type="text"
                   value={formCanal.nombre}
                   onChange={(e) => setFormCanal({ ...formCanal, nombre: e.target.value })}
-                  className="w-full bg-gray-200 text-gray-900 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full bg-[#40444b] text-[#dcddde] px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-[#5865f2]"
                   placeholder="nombre-del-canal"
                 />
               </div>
@@ -774,7 +771,7 @@ export default function ChatPage() {
                   type="text"
                   value={formCanal.descripcion}
                   onChange={(e) => setFormCanal({ ...formCanal, descripcion: e.target.value })}
-                  className="w-full bg-gray-200 text-gray-900 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full bg-[#40444b] text-[#dcddde] px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-[#5865f2]"
                   placeholder="Descripción del canal"
                 />
               </div>
@@ -783,7 +780,7 @@ export default function ChatPage() {
                 <select
                   value={formCanal.categoria}
                   onChange={(e) => setFormCanal({ ...formCanal, categoria: e.target.value as any, sucursalId: '', equipoId: '' })}
-                  className="w-full bg-gray-200 text-gray-900 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full bg-[#40444b] text-[#dcddde] px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-[#5865f2]"
                 >
                   <option value="GENERAL">General</option>
                   <option value="SUCURSAL">Sucursal</option>
@@ -796,7 +793,7 @@ export default function ChatPage() {
                   <select
                     value={formCanal.sucursalId}
                     onChange={(e) => setFormCanal({ ...formCanal, sucursalId: e.target.value })}
-                    className="w-full bg-gray-200 text-gray-900 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full bg-[#40444b] text-[#dcddde] px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-[#5865f2]"
                   >
                     <option value="">Selecciona una sucursal</option>
                     {sucursales.map(s => (
@@ -811,7 +808,7 @@ export default function ChatPage() {
                   <select
                     value={formCanal.equipoId}
                     onChange={(e) => setFormCanal({ ...formCanal, equipoId: e.target.value })}
-                    className="w-full bg-gray-200 text-gray-900 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full bg-[#40444b] text-[#dcddde] px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-[#5865f2]"
                   >
                     <option value="">Selecciona un equipo</option>
                     {maquinaria.map(m => (
@@ -824,13 +821,13 @@ export default function ChatPage() {
             <div className="flex justify-end space-x-2 mt-6">
               <button
                 onClick={() => setShowModalCrearCanal(false)}
-                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                className="px-4 py-2 bg-[#40444b] rounded hover:bg-[#4a4e55]"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleCrearCanal}
-                className="px-4 py-2 bg-primary-600 rounded hover:bg-primary-700"
+                className="px-4 py-2 bg-[#5865f2] rounded hover:bg-[#4752c4]"
               >
                 Crear
               </button>
@@ -841,7 +838,7 @@ export default function ChatPage() {
 
       {showModalEditarCanal && canalEditando && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+          <div className="bg-[#2f3136] rounded-lg p-6 w-full max-w-md">
             <h3 className="text-xl font-semibold mb-4">Editar Canal</h3>
             <div className="space-y-4">
               <div>
@@ -850,7 +847,7 @@ export default function ChatPage() {
                   type="text"
                   value={formCanal.nombre}
                   onChange={(e) => setFormCanal({ ...formCanal, nombre: e.target.value })}
-                  className="w-full bg-gray-200 text-gray-900 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full bg-[#40444b] text-[#dcddde] px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-[#5865f2]"
                 />
               </div>
               <div>
@@ -859,7 +856,7 @@ export default function ChatPage() {
                   type="text"
                   value={formCanal.descripcion}
                   onChange={(e) => setFormCanal({ ...formCanal, descripcion: e.target.value })}
-                  className="w-full bg-gray-200 text-gray-900 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full bg-[#40444b] text-[#dcddde] px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-[#5865f2]"
                 />
               </div>
             </div>
@@ -869,13 +866,13 @@ export default function ChatPage() {
                   setShowModalEditarCanal(false)
                   setCanalEditando(null)
                 }}
-                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                className="px-4 py-2 bg-[#40444b] rounded hover:bg-[#4a4e55]"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleEditarCanal}
-                className="px-4 py-2 bg-primary-600 rounded hover:bg-primary-700"
+                className="px-4 py-2 bg-[#5865f2] rounded hover:bg-[#4752c4]"
               >
                 Guardar
               </button>

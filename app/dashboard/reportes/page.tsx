@@ -132,7 +132,7 @@ export default function ReportesPage() {
   const renderBarChart = (data: Array<{ label: string; value: number }>, title: string) => {
     if (!data || data.length === 0) {
       return (
-        <div className="text-center py-8 text-secondary-500">
+        <div className="text-center py-8 text-gray-500">
           No hay datos disponibles
         </div>
       )
@@ -146,10 +146,10 @@ export default function ReportesPage() {
         {data.map((item, index) => (
           <div key={index}>
             <div className="flex justify-between items-center mb-1">
-              <span className="text-sm font-medium text-secondary-700">{item.label}</span>
-              <span className="text-sm text-secondary-600">{item.value}</span>
+              <span className="text-sm font-medium text-gray-700">{item.label}</span>
+              <span className="text-sm text-gray-600">{item.value}</span>
             </div>
-            <div className="w-full bg-secondary-200 rounded-full h-4">
+            <div className="w-full bg-gray-200 rounded-full h-4">
               <div
                 className="bg-primary-600 h-4 rounded-full transition-all duration-500"
                 style={{ width: `${(item.value / maxValue) * 100}%` }}
@@ -164,7 +164,7 @@ export default function ReportesPage() {
   const renderLineChart = (data: Array<{ fecha: string; cantidad: number }>) => {
     if (!data || data.length === 0) {
       return (
-        <div className="text-center py-8 text-secondary-500">
+        <div className="text-center py-8 text-gray-500">
           No hay datos disponibles
         </div>
       )
@@ -202,7 +202,7 @@ export default function ReportesPage() {
             />
           ))}
         </svg>
-        <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-secondary-500">
+        <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500">
           {puntos.filter((_, i) => i % Math.ceil(puntos.length / 5) === 0).map((p, i) => (
             <span key={i}>{p.fecha}</span>
           ))}
@@ -213,28 +213,28 @@ export default function ReportesPage() {
 
   if (loading && !estadisticas) {
     return (
-      <div className="min-h-screen bg-secondary-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-secondary-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-secondary-200">
+      <header className="bg-gray-100 shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="mr-4 p-2 rounded-lg bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
+                className="mr-4 p-2 rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <h1 className="text-xl font-semibold text-secondary-900">Reportes y Estadísticas</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Reportes y Estadísticas</h1>
             </div>
           </div>
         </div>
@@ -246,7 +246,7 @@ export default function ReportesPage() {
         <div className="card mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Fecha Inicio
               </label>
               <input
@@ -257,7 +257,7 @@ export default function ReportesPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Fecha Fin
               </label>
               <input
@@ -268,7 +268,7 @@ export default function ReportesPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Sucursal
               </label>
               <select
@@ -305,8 +305,8 @@ export default function ReportesPage() {
                     <ChartBarIcon className="h-6 w-6 text-primary-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-secondary-600">Total Comandas</p>
-                    <p className="text-2xl font-bold text-secondary-900">
+                    <p className="text-sm font-medium text-gray-600">Total Comandas</p>
+                    <p className="text-2xl font-bold text-gray-900">
                       {estadisticas.resumen.totalComandas}
                     </p>
                   </div>
@@ -319,8 +319,8 @@ export default function ReportesPage() {
                     <ChartBarIcon className="h-6 w-6 text-success-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-secondary-600">Completadas</p>
-                    <p className="text-2xl font-bold text-secondary-900">
+                    <p className="text-sm font-medium text-gray-600">Completadas</p>
+                    <p className="text-2xl font-bold text-gray-900">
                       {estadisticas.resumen.comandasCompletadas}
                     </p>
                   </div>
@@ -333,8 +333,8 @@ export default function ReportesPage() {
                     <ChartBarIcon className="h-6 w-6 text-warning-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-secondary-600">Pendientes</p>
-                    <p className="text-2xl font-bold text-secondary-900">
+                    <p className="text-sm font-medium text-gray-600">Pendientes</p>
+                    <p className="text-2xl font-bold text-gray-900">
                       {estadisticas.resumen.comandasPendientes}
                     </p>
                   </div>
@@ -343,12 +343,12 @@ export default function ReportesPage() {
 
               <div className="card">
                 <div className="flex items-center">
-                  <div className="p-3 bg-secondary-100 rounded-lg mr-4">
-                    <ChartBarIcon className="h-6 w-6 text-secondary-600" />
+                  <div className="p-3 bg-gray-100 rounded-lg mr-4">
+                    <ChartBarIcon className="h-6 w-6 text-gray-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-secondary-600">En Proceso</p>
-                    <p className="text-2xl font-bold text-secondary-900">
+                    <p className="text-sm font-medium text-gray-600">En Proceso</p>
+                    <p className="text-2xl font-bold text-gray-900">
                       {estadisticas.resumen.comandasEnProceso}
                     </p>
                   </div>
@@ -360,7 +360,7 @@ export default function ReportesPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* Comandas por Estado */}
               <div className="card">
-                <h3 className="text-lg font-semibold text-secondary-900 mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Comandas por Estado
                 </h3>
                 {renderBarChart(
@@ -374,7 +374,7 @@ export default function ReportesPage() {
 
               {/* Comandas por Sucursal */}
               <div className="card">
-                <h3 className="text-lg font-semibold text-secondary-900 mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Comandas por Sucursal
                 </h3>
                 {renderBarChart(
@@ -390,7 +390,7 @@ export default function ReportesPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* Comandas por Tipo de Prueba */}
               <div className="card">
-                <h3 className="text-lg font-semibold text-secondary-900 mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Comandas por Tipo de Prueba
                 </h3>
                 {renderBarChart(
@@ -404,7 +404,7 @@ export default function ReportesPage() {
 
               {/* Tendencia de Comandas */}
               <div className="card">
-                <h3 className="text-lg font-semibold text-secondary-900 mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Tendencia (Últimos 30 días)
                 </h3>
                 {renderLineChart(estadisticas.porDia)}
@@ -415,30 +415,30 @@ export default function ReportesPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="card">
                 <div className="flex items-center mb-4">
-                  <BuildingOfficeIcon className="h-5 w-5 text-secondary-400 mr-2" />
-                  <h3 className="text-lg font-semibold text-secondary-900">Sucursales</h3>
+                  <BuildingOfficeIcon className="h-5 w-5 text-gray-400 mr-2" />
+                  <h3 className="text-lg font-semibold text-gray-900">Sucursales</h3>
                 </div>
-                <p className="text-3xl font-bold text-secondary-900">
+                <p className="text-3xl font-bold text-gray-900">
                   {estadisticas.resumen.totalSucursales}
                 </p>
               </div>
 
               <div className="card">
                 <div className="flex items-center mb-4">
-                  <ChartBarIcon className="h-5 w-5 text-secondary-400 mr-2" />
-                  <h3 className="text-lg font-semibold text-secondary-900">Clientes</h3>
+                  <ChartBarIcon className="h-5 w-5 text-gray-400 mr-2" />
+                  <h3 className="text-lg font-semibold text-gray-900">Clientes</h3>
                 </div>
-                <p className="text-3xl font-bold text-secondary-900">
+                <p className="text-3xl font-bold text-gray-900">
                   {estadisticas.resumen.totalClientes}
                 </p>
               </div>
 
               <div className="card">
                 <div className="flex items-center mb-4">
-                  <CalendarIcon className="h-5 w-5 text-secondary-400 mr-2" />
-                  <h3 className="text-lg font-semibold text-secondary-900">Usuarios</h3>
+                  <CalendarIcon className="h-5 w-5 text-gray-400 mr-2" />
+                  <h3 className="text-lg font-semibold text-gray-900">Usuarios</h3>
                 </div>
-                <p className="text-3xl font-bold text-secondary-900">
+                <p className="text-3xl font-bold text-gray-900">
                   {estadisticas.resumen.totalUsuarios}
                 </p>
               </div>

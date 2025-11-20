@@ -31,7 +31,6 @@ interface Maquinaria {
     tipoPrueba: {
       id: string
       nombre: string
-      elementos: string[]
     }
   }>
   _count: {
@@ -278,31 +277,6 @@ export default function MaquinariaPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta maquinaria?')) {
-      return
-    }
-
-    try {
-      const token = localStorage.getItem('token')
-      const response = await fetch(`/api/maquinaria/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        toast.success('Maquinaria eliminada exitosamente')
-        loadData()
-      } else {
-        toast.error(data.error || 'Error al eliminar maquinaria')
-      }
-    } catch (error) {
-      toast.error('Error de conexión')
-    }
-  }
-
   const handleCreateAnalito = async () => {
     if (!newAnalitoData.nombre.trim()) {
       toast.error('El nombre del parámetro es obligatorio')
@@ -525,11 +499,6 @@ export default function MaquinariaPage() {
     }
   }
 
-  const formatElemento = (valor: string) =>
-    valor
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (char) => char.toUpperCase())
-
   const filteredMaquinaria = maquinaria.filter(equipo => {
     const matchesSearch = equipo.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          equipo.modelo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -543,28 +512,28 @@ export default function MaquinariaPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-secondary-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-secondary-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-secondary-200">
+      <header className="bg-gray-100 shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="mr-4 p-2 rounded-lg bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
+                className="mr-4 p-2 rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <h1 className="text-xl font-semibold text-secondary-900">Gestión de Maquinaria</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Gestión de Maquinaria</h1>
             </div>
             
             <div className="flex items-center gap-3">
@@ -640,10 +609,10 @@ export default function MaquinariaPage() {
         {showCatalogSection && canViewCatalog && (
           <div className="card mb-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-secondary-900">Catálogo Clínico</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Catálogo Clínico</h2>
               <button
                 onClick={() => setShowCatalogSection(false)}
-                className="text-secondary-400 hover:text-secondary-600"
+                className="text-gray-400 hover:text-gray-600"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -655,24 +624,24 @@ export default function MaquinariaPage() {
               {/* Lista de Analitos */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-md font-medium text-secondary-700">Parámetros</h3>
-                  <span className="text-sm text-secondary-500">{analitos.length} registrados</span>
+                  <h3 className="text-md font-medium text-gray-700">Parámetros</h3>
+                  <span className="text-sm text-gray-500">{analitos.length} registrados</span>
                 </div>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {analitos.length === 0 ? (
-                    <p className="text-sm text-secondary-500 text-center py-4">
+                    <p className="text-sm text-gray-500 text-center py-4">
                       No hay parámetros registrados
                     </p>
                   ) : (
                     analitos.map(analito => (
                       <div
                         key={analito.id}
-                        className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg hover:bg-secondary-100 transition-colors"
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                       >
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-secondary-900">{analito.nombre}</p>
+                          <p className="text-sm font-medium text-gray-900">{analito.nombre}</p>
                           {analito.unidad && (
-                            <p className="text-xs text-secondary-500">Unidad: {analito.unidad}</p>
+                            <p className="text-xs text-gray-500">Unidad: {analito.unidad}</p>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
@@ -704,27 +673,27 @@ export default function MaquinariaPage() {
               {/* Lista de Categorías */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-md font-medium text-secondary-700">Categorías</h3>
-                  <span className="text-sm text-secondary-500">{categorias.length} registradas</span>
+                  <h3 className="text-md font-medium text-gray-700">Categorías</h3>
+                  <span className="text-sm text-gray-500">{categorias.length} registradas</span>
                 </div>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {categorias.length === 0 ? (
-                    <p className="text-sm text-secondary-500 text-center py-4">
+                    <p className="text-sm text-gray-500 text-center py-4">
                       No hay categorías registradas
                     </p>
                   ) : (
                     categorias.map(categoria => (
                       <div
                         key={categoria.id}
-                        className="p-3 bg-secondary-50 rounded-lg hover:bg-secondary-100 transition-colors"
+                        className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                       >
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-secondary-900">{categoria.nombre}</p>
+                            <p className="text-sm font-medium text-gray-900">{categoria.nombre}</p>
                             {categoria.descripcion && (
-                              <p className="text-xs text-secondary-500 mt-1">{categoria.descripcion}</p>
+                              <p className="text-xs text-gray-500 mt-1">{categoria.descripcion}</p>
                             )}
-                            <p className="text-xs text-secondary-400 mt-1">
+                            <p className="text-xs text-gray-400 mt-1">
                               {categoria.analitos.length} parámetros
                             </p>
                           </div>
@@ -750,8 +719,8 @@ export default function MaquinariaPage() {
                           </div>
                         </div>
                         {categoria.analitos.length > 0 && (
-                          <div className="mt-2 pt-2 border-t border-secondary-200">
-                            <p className="text-xs text-secondary-600">
+                          <div className="mt-2 pt-2 border-t border-gray-200">
+                            <p className="text-xs text-gray-600">
                               {categoria.analitos.map(d => d.analito.nombre).join(', ')}
                             </p>
                           </div>
@@ -770,7 +739,7 @@ export default function MaquinariaPage() {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400" />
+                <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Buscar maquinaria..."
@@ -801,99 +770,45 @@ export default function MaquinariaPage() {
         {/* Grid de Maquinaria */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredMaquinaria.map((equipo) => (
-            <div key={equipo.id} className="card hover:shadow-lg transition-shadow duration-200">
+            <div
+              key={equipo.id}
+              onClick={() => router.push(`/dashboard/maquinaria/${equipo.id}`)}
+              className="card hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+            >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center">
                   <div className="p-2 bg-warning-100 rounded-lg mr-3">
                     <CpuChipIcon className="h-6 w-6 text-warning-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-secondary-900">
+                    <h3 className="text-lg font-semibold text-gray-900">
                       {equipo.nombre}
                     </h3>
-                    <p className="text-sm text-secondary-500">
+                    <p className="text-sm text-gray-500">
                       {equipo.marca} {equipo.modelo}
                     </p>
                   </div>
                 </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => router.push(`/dashboard/maquinaria/${equipo.id}`)}
-                    className="text-primary-600 hover:text-primary-900"
-                  >
-                    <EyeIcon className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => router.push(`/dashboard/maquinaria/${equipo.id}/editar`)}
-                    className="text-secondary-600 hover:text-secondary-900"
-                  >
-                    <PencilIcon className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(equipo.id)}
-                    className="text-danger-600 hover:text-danger-900"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </button>
-                </div>
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center text-sm text-secondary-600">
+                <div className="flex items-center text-sm text-gray-600">
                   <BuildingOfficeIcon className="h-4 w-4 mr-2" />
                   {equipo.sucursal.nombre}
                 </div>
 
                 {equipo.serie && (
-                  <div className="flex items-center text-sm text-secondary-600">
+                  <div className="flex items-center text-sm text-gray-600">
                     <WrenchScrewdriverIcon className="h-4 w-4 mr-2" />
                     Serie: {equipo.serie}
                   </div>
                 )}
 
-                <div className="flex items-center justify-between pt-3 border-t border-secondary-200">
-                  <div className="flex items-center text-sm text-secondary-600">
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    {equipo._count.pruebas} pruebas asignadas
-                  </div>
+                <div className="flex items-center justify-between pt-3 border-t border-gray-200">
                   <span className={`badge ${equipo.activa ? 'badge-success' : 'badge-danger'}`}>
                     {equipo.activa ? 'Activa' : 'Inactiva'}
                   </span>
                 </div>
-
-                {equipo.pruebas.length > 0 && (
-                  <div>
-                    <label className="text-sm font-medium text-secondary-500">Pruebas asignadas</label>
-                    <div className="mt-2 space-y-3">
-                      {equipo.pruebas.map(prueba => (
-                        <div
-                          key={prueba.tipoPrueba.id}
-                          className="border border-secondary-200 rounded-lg p-3 bg-secondary-50"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-secondary-900">
-                              {prueba.tipoPrueba.nombre}
-                            </span>
-                            <span className="text-xs text-secondary-500">
-                              {prueba.tipoPrueba.elementos.length} parámetros
-                            </span>
-                          </div>
-                          {prueba.tipoPrueba.elementos.length > 0 && (
-                            <ul className="mt-2 space-y-1 text-xs text-secondary-600">
-                              {prueba.tipoPrueba.elementos.map(elemento => (
-                                <li key={`${prueba.tipoPrueba.id}-${elemento}`}>
-                                  • {formatElemento(elemento)}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           ))}
@@ -901,11 +816,11 @@ export default function MaquinariaPage() {
 
         {filteredMaquinaria.length === 0 && (
           <div className="text-center py-12">
-            <CpuChipIcon className="h-12 w-12 text-secondary-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-secondary-900 mb-2">
+            <CpuChipIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
               No se encontró maquinaria
             </h3>
-            <p className="text-secondary-500">
+            <p className="text-gray-500">
               {searchTerm || filterSucursal ? 'Intenta con otros filtros' : 'Registra tu primera maquinaria'}
             </p>
           </div>
@@ -915,13 +830,13 @@ export default function MaquinariaPage() {
       {/* Modal Nueva Maquinaria */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
+          <div className="bg-gray-100 rounded-lg max-w-md w-full">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-secondary-900">Nueva Maquinaria</h2>
+                <h2 className="text-xl font-semibold text-gray-900">Nueva Maquinaria</h2>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="text-secondary-400 hover:text-secondary-600"
+                  className="text-gray-400 hover:text-gray-600"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -931,7 +846,7 @@ export default function MaquinariaPage() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Nombre *
                   </label>
                   <input
@@ -946,7 +861,7 @@ export default function MaquinariaPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Marca
                     </label>
                     <input
@@ -959,7 +874,7 @@ export default function MaquinariaPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Modelo
                     </label>
                     <input
@@ -973,7 +888,7 @@ export default function MaquinariaPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Número de Serie
                   </label>
                   <input
@@ -986,7 +901,7 @@ export default function MaquinariaPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Sucursal *
                   </label>
                   <select
@@ -1028,10 +943,10 @@ export default function MaquinariaPage() {
       {/* Modal Nuevo Parámetro */}
       {showAnalitoModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
+          <div className="bg-gray-100 rounded-lg max-w-md w-full">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-secondary-900">
+                <h2 className="text-xl font-semibold text-gray-900">
                   {editingAnalito ? 'Editar parámetro' : 'Nuevo parámetro'}
                 </h2>
                 <button
@@ -1044,7 +959,7 @@ export default function MaquinariaPage() {
                       descripcion: ''
                     })
                   }}
-                  className="text-secondary-400 hover:text-secondary-600"
+                  className="text-gray-400 hover:text-gray-600"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1054,7 +969,7 @@ export default function MaquinariaPage() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Nombre *
                   </label>
                   <input
@@ -1067,7 +982,7 @@ export default function MaquinariaPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Unidad
                   </label>
                   <input
@@ -1080,7 +995,7 @@ export default function MaquinariaPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Descripción
                   </label>
                   <textarea
@@ -1126,10 +1041,10 @@ export default function MaquinariaPage() {
       {/* Modal Nueva Categoría */}
       {showCategoriaModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-gray-100 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-secondary-900">
+                <h2 className="text-xl font-semibold text-gray-900">
                   {editingCategoria ? 'Editar categoría de pruebas' : 'Nueva categoría de pruebas'}
                 </h2>
                 <button
@@ -1142,7 +1057,7 @@ export default function MaquinariaPage() {
                       analitoIds: []
                     })
                   }}
-                  className="text-secondary-400 hover:text-secondary-600"
+                  className="text-gray-400 hover:text-gray-600"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1153,7 +1068,7 @@ export default function MaquinariaPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Nombre *
                     </label>
                     <input
@@ -1165,7 +1080,7 @@ export default function MaquinariaPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Descripción
                     </label>
                     <input
@@ -1179,25 +1094,25 @@ export default function MaquinariaPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Parámetros incluidos *
                   </label>
 
                   {loadingCatalog ? (
-                    <div className="text-sm text-secondary-500">Cargando parámetros...</div>
+                    <div className="text-sm text-gray-500">Cargando parámetros...</div>
                   ) : analitos.length === 0 ? (
-                    <p className="text-sm text-secondary-500">
+                    <p className="text-sm text-gray-500">
                       No hay parámetros registrados todavía. Crea al menos uno para poder formar una categoría.
                     </p>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto border border-secondary-200 rounded-lg p-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-3">
                       {analitos.map(analito => {
                         const checked = newCategoriaData.analitoIds.includes(analito.id)
                         return (
-                          <label key={analito.id} className="flex items-start gap-2 text-sm text-secondary-700">
+                          <label key={analito.id} className="flex items-start gap-2 text-sm text-gray-700">
                             <input
                               type="checkbox"
-                              className="mt-1 rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+                              className="mt-1 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                               checked={checked}
                               onChange={(e) => {
                                 setNewCategoriaData(prev => ({
@@ -1211,10 +1126,10 @@ export default function MaquinariaPage() {
                             <div>
                               <p className="font-medium">{analito.nombre}</p>
                               {analito.unidad && (
-                                <p className="text-xs text-secondary-500">Unidad: {analito.unidad}</p>
+                                <p className="text-xs text-gray-500">Unidad: {analito.unidad}</p>
                               )}
                               {analito.descripcion && (
-                                <p className="text-xs text-secondary-400 mt-0.5">{analito.descripcion}</p>
+                                <p className="text-xs text-gray-400 mt-0.5">{analito.descripcion}</p>
                               )}
                             </div>
                           </label>

@@ -180,28 +180,28 @@ export default function ClientesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-secondary-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-secondary-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-secondary-200">
+      <header className="bg-gray-100 shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="mr-4 p-2 rounded-lg bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
+                className="mr-4 p-2 rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <h1 className="text-xl font-semibold text-secondary-900">Gestión de Clientes</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Gestión de Clientes</h1>
             </div>
             
             <button
@@ -222,7 +222,7 @@ export default function ClientesPage() {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400" />
+                <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Buscar por nombre, email, teléfono..."
@@ -242,39 +242,39 @@ export default function ClientesPage() {
         <div className="card">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-secondary-200">
-              <thead className="bg-secondary-50">
+              <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Cliente
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Contacto
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Información
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Comandas
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Acciones
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-secondary-200">
+              <tbody className="bg-gray-100 divide-y divide-secondary-200">
                 {filteredClientes.map((cliente) => (
-                  <tr key={cliente.id} className="hover:bg-secondary-50">
+                  <tr key={cliente.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="p-2 bg-primary-100 rounded-lg mr-3">
                           <UserIcon className="h-5 w-5 text-primary-600" />
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-secondary-900">
+                          <div className="text-sm font-medium text-gray-900">
                             {cliente.nombre} {cliente.apellido}
                           </div>
                           {cliente.genero && (
-                            <div className="text-sm text-secondary-500 capitalize">
+                            <div className="text-sm text-gray-500 capitalize">
                               {cliente.genero === 'M' ? 'Masculino' : cliente.genero === 'F' ? 'Femenino' : 'Otro'}
                             </div>
                           )}
@@ -282,26 +282,26 @@ export default function ClientesPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-secondary-900 flex items-center mb-1">
-                        <EnvelopeIcon className="h-4 w-4 mr-2 text-secondary-400" />
+                      <div className="text-sm text-gray-900 flex items-center mb-1">
+                        <EnvelopeIcon className="h-4 w-4 mr-2 text-gray-400" />
                         {cliente.email}
                       </div>
                       {cliente.telefono && (
-                        <div className="text-sm text-secondary-600 flex items-center">
-                          <PhoneIcon className="h-4 w-4 mr-2 text-secondary-400" />
+                        <div className="text-sm text-gray-600 flex items-center">
+                          <PhoneIcon className="h-4 w-4 mr-2 text-gray-400" />
                           {cliente.telefono}
                         </div>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {cliente.fechaNacimiento && (
-                        <div className="text-sm text-secondary-600 mb-1">
+                        <div className="text-sm text-gray-600 mb-1">
                           Nacimiento: {new Date(cliente.fechaNacimiento).toLocaleDateString('es-ES')}
                         </div>
                       )}
                       {cliente.direccion && (
-                        <div className="text-sm text-secondary-600 flex items-start">
-                          <MapPinIcon className="h-4 w-4 mr-2 text-secondary-400 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-gray-600 flex items-start">
+                          <MapPinIcon className="h-4 w-4 mr-2 text-gray-400 mt-0.5 flex-shrink-0" />
                           <span className="line-clamp-2">{cliente.direccion}</span>
                         </div>
                       )}
@@ -325,7 +325,7 @@ export default function ClientesPage() {
                         </button>
                         <button
                           onClick={() => handleEdit(cliente)}
-                          className="text-secondary-600 hover:text-secondary-900"
+                          className="text-gray-600 hover:text-gray-900"
                           title="Editar cliente"
                         >
                           <PencilIcon className="h-4 w-4" />
@@ -340,8 +340,8 @@ export default function ClientesPage() {
 
           {/* Paginación */}
           {totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-secondary-200 flex items-center justify-between">
-              <div className="text-sm text-secondary-600">
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
                 Página {currentPage} de {totalPages}
               </div>
               <div className="flex space-x-2">
@@ -365,11 +365,11 @@ export default function ClientesPage() {
 
           {filteredClientes.length === 0 && (
             <div className="text-center py-12">
-              <UserIcon className="h-12 w-12 text-secondary-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-secondary-900 mb-2">
+              <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
                 No se encontraron clientes
               </h3>
-              <p className="text-secondary-500">
+              <p className="text-gray-500">
                 {searchTerm ? 'Intenta con otros términos de búsqueda' : 'Crea tu primer cliente'}
               </p>
             </div>
@@ -380,10 +380,10 @@ export default function ClientesPage() {
       {/* Modal Nuevo/Editar Cliente */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-gray-100 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-secondary-900">
+                <h2 className="text-xl font-semibold text-gray-900">
                   {editingCliente ? 'Editar Cliente' : 'Nuevo Cliente'}
                 </h2>
                 <button
@@ -392,7 +392,7 @@ export default function ClientesPage() {
                     setEditingCliente(null)
                     resetForm()
                   }}
-                  className="text-secondary-400 hover:text-secondary-600"
+                  className="text-gray-400 hover:text-gray-600"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -403,7 +403,7 @@ export default function ClientesPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Nombre *
                     </label>
                     <input
@@ -417,7 +417,7 @@ export default function ClientesPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Apellido *
                     </label>
                     <input
@@ -433,7 +433,7 @@ export default function ClientesPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Email *
                     </label>
                     <input
@@ -446,14 +446,14 @@ export default function ClientesPage() {
                       disabled={!!editingCliente}
                     />
                     {editingCliente && (
-                      <p className="text-xs text-secondary-500 mt-1">
+                      <p className="text-xs text-gray-500 mt-1">
                         El email no se puede modificar
                       </p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Teléfono
                     </label>
                     <input
@@ -468,7 +468,7 @@ export default function ClientesPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Fecha de Nacimiento
                     </label>
                     <input
@@ -480,7 +480,7 @@ export default function ClientesPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Género
                     </label>
                     <select
@@ -497,7 +497,7 @@ export default function ClientesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Dirección
                   </label>
                   <textarea

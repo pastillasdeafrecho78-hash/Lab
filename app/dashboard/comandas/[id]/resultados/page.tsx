@@ -284,7 +284,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-secondary-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
       </div>
     )
@@ -292,9 +292,9 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
 
   if (!comanda) {
     return (
-      <div className="min-h-screen bg-secondary-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-secondary-900 mb-4">Comanda no encontrada</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Comanda no encontrada</h2>
           <button
             onClick={() => router.push('/dashboard/comandas')}
             className="btn btn-primary"
@@ -307,23 +307,23 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="min-h-screen bg-secondary-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-secondary-200">
+      <header className="bg-gray-100 shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <button
                 onClick={() => router.push(`/dashboard/comandas/${params.id}`)}
-                className="mr-4 p-2 rounded-lg bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
+                className="mr-4 p-2 rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100"
               >
                 <ArrowLeftIcon className="h-5 w-5" />
               </button>
               <div>
-                <h1 className="text-xl font-semibold text-secondary-900">
+                <h1 className="text-xl font-semibold text-gray-900">
                   Resultados - {comanda.numeroComanda}
                 </h1>
-                <p className="text-sm text-secondary-500">
+                <p className="text-sm text-gray-500">
                   {comanda.cliente.nombre} {comanda.cliente.apellido}
                 </p>
               </div>
@@ -370,16 +370,16 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
         <div className="card mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium text-secondary-500">Tipo de Prueba</label>
-              <p className="text-secondary-900">{comanda.tipoPrueba.nombre}</p>
+              <label className="text-sm font-medium text-gray-500">Tipo de Prueba</label>
+              <p className="text-gray-900">{comanda.tipoPrueba.nombre}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-secondary-500">Sucursal</label>
-              <p className="text-secondary-900">{comanda.sucursal.nombre}</p>
+              <label className="text-sm font-medium text-gray-500">Sucursal</label>
+              <p className="text-gray-900">{comanda.sucursal.nombre}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-secondary-500">Estado</label>
-              <p className="text-secondary-900">{comanda.estado.replace('_', ' ')}</p>
+              <label className="text-sm font-medium text-gray-500">Estado</label>
+              <p className="text-gray-900">{comanda.estado.replace('_', ' ')}</p>
             </div>
           </div>
         </div>
@@ -387,52 +387,52 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
         {/* Resultados */}
         <div className="card">
           <div className="card-header">
-            <h3 className="text-lg font-semibold text-secondary-900">
+            <h3 className="text-lg font-semibold text-gray-900">
               Resultados ({comanda.resultados.length}/{comanda.elementos.length})
             </h3>
           </div>
 
           {comanda.resultados.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-secondary-500">No hay resultados registrados</p>
+              <p className="text-gray-500">No hay resultados registrados</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-secondary-200">
-                <thead className="bg-secondary-50">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Elemento
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Valor
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Rango Normal
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Estado
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Registrado Por
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-secondary-200">
+                <tbody className="bg-gray-100 divide-y divide-secondary-200">
                   {comanda.resultados.map((resultado) => {
                     const isNormal = isValorNormal(resultado.valor, resultado.rangoNormal)
                     return (
-                      <tr key={resultado.id} className="hover:bg-secondary-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-secondary-900">
+                      <tr key={resultado.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {resultado.elemento.replace('_', ' ')}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {resultado.valor} {resultado.unidad}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {resultado.rangoNormal}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -440,7 +440,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                             {isNormal ? 'Normal' : 'Fuera de Rango'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {resultado.registradoPor.nombre} {resultado.registradoPor.apellido}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -466,13 +466,13 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
       {/* Modal Agregar Resultado Individual */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
+          <div className="bg-gray-100 rounded-lg max-w-md w-full">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-secondary-900">Agregar Resultado</h2>
+                <h2 className="text-xl font-semibold text-gray-900">Agregar Resultado</h2>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="text-secondary-400 hover:text-secondary-600"
+                  className="text-gray-400 hover:text-gray-600"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -482,7 +482,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Elemento *
                   </label>
                   <select
@@ -502,7 +502,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Valor *
                     </label>
                     <input
@@ -516,7 +516,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Unidad *
                     </label>
                     <input
@@ -531,7 +531,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Rango Normal *
                   </label>
                   <input
@@ -545,7 +545,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Observaciones
                   </label>
                   <textarea
@@ -580,13 +580,13 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
       {/* Modal Agregar Resultados Múltiples */}
       {showBulkModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-gray-100 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-secondary-900">Agregar Resultados Múltiples</h2>
+                <h2 className="text-xl font-semibold text-gray-900">Agregar Resultados Múltiples</h2>
                 <button
                   onClick={() => setShowBulkModal(false)}
-                  className="text-secondary-400 hover:text-secondary-600"
+                  className="text-gray-400 hover:text-gray-600"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -596,14 +596,14 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
 
               <form onSubmit={handleBulkSubmit} className="space-y-6">
                 {bulkData.map((item, index) => (
-                  <div key={item.elemento} className="border border-secondary-200 rounded-lg p-4">
-                    <h4 className="font-medium text-secondary-900 mb-4">
+                  <div key={item.elemento} className="border border-gray-200 rounded-lg p-4">
+                    <h4 className="font-medium text-gray-900 mb-4">
                       {item.elemento.replace('_', ' ')}
                     </h4>
                     
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Valor *
                         </label>
                         <input
@@ -621,7 +621,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Unidad *
                         </label>
                         <input
@@ -639,7 +639,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Rango Normal *
                         </label>
                         <input
@@ -657,7 +657,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Observaciones
                         </label>
                         <input
