@@ -6,6 +6,7 @@ import { ArrowLeftIcon, PaintBrushIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 import { getAuthHeaders } from '@/lib/api-helpers'
 import { getThemeColors, saveThemeColors, resetThemeColors, applyThemeColors, ThemeColors, availableFonts } from '@/lib/theme'
+import { themePresets, getPresetById, ThemePreset } from '@/lib/theme-presets'
 
 interface Usuario {
   id: string
@@ -180,6 +181,76 @@ export default function PersonalizacionPage() {
           </div>
 
           <div className="space-y-8">
+            {/* Perfiles Preestablecidos - Arcoíris */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Colores del Arcoíris</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Perfiles claros basados en los colores del arcoíris
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {themePresets.filter(p => p.id.startsWith('rainbow-')).map((preset) => (
+                  <button
+                    key={preset.id}
+                    onClick={() => {
+                      if (usuario) {
+                        setColors(preset.colors)
+                        applyThemeColors(preset.colors)
+                        saveThemeColors(preset.colors, usuario.id)
+                        toast.success(`Perfil "${preset.name}" aplicado`)
+                      }
+                    }}
+                    className="p-4 bg-gray-100 rounded-lg border-2 border-gray-300 hover:border-primary-500 transition-all text-left group"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold text-gray-900">{preset.name}</span>
+                      <div
+                        className="w-6 h-6 rounded-full border-2 border-gray-300"
+                        style={{ backgroundColor: preset.colors.primaryBase }}
+                        title="Color primario"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-600">{preset.description}</p>
+                    <div className="mt-2 h-2 rounded" style={{ backgroundColor: preset.colors.primaryBase }} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Perfiles Preestablecidos - Modo Oscuro */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Modo Oscuro</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Temas oscuros con acentos de colores del arcoíris
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {themePresets.filter(p => p.id.startsWith('dark-')).map((preset) => (
+                  <button
+                    key={preset.id}
+                    onClick={() => {
+                      if (usuario) {
+                        setColors(preset.colors)
+                        applyThemeColors(preset.colors)
+                        saveThemeColors(preset.colors, usuario.id)
+                        toast.success(`Perfil "${preset.name}" aplicado`)
+                      }
+                    }}
+                    className="p-4 bg-gray-800 rounded-lg border-2 border-gray-700 hover:border-primary-500 transition-all text-left group"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold text-gray-100">{preset.name}</span>
+                      <div
+                        className="w-6 h-6 rounded-full border-2 border-gray-600"
+                        style={{ backgroundColor: preset.colors.primaryBase }}
+                        title="Color primario"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-400">{preset.description}</p>
+                    <div className="mt-2 h-2 rounded" style={{ backgroundColor: preset.colors.primaryBase }} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Preview - Sección principal */}
             <div className="p-6 bg-gray-300 rounded-lg relative">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Vista Previa</h3>
