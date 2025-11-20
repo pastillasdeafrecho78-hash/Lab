@@ -9,7 +9,6 @@ import {
   BuildingOfficeIcon,
   PencilIcon,
   TrashIcon,
-  EyeIcon,
   WrenchScrewdriverIcon,
   SquaresPlusIcon,
   BeakerIcon
@@ -772,7 +771,7 @@ export default function MaquinariaPage() {
           {filteredMaquinaria.map((equipo) => (
             <div
               key={equipo.id}
-              onClick={() => router.push(`/dashboard/maquinaria/${equipo.id}`)}
+              onClick={() => router.push(`/dashboard/maquinaria/${equipo.id}/editar`)}
               className="card hover:shadow-lg transition-shadow duration-200 cursor-pointer"
             >
               <div className="flex items-start justify-between mb-4">
