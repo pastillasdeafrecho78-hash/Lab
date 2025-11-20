@@ -18,7 +18,20 @@ interface Usuario {
 export default function PersonalizacionPage() {
   const [usuario, setUsuario] = useState<Usuario | null>(null)
   const [loading, setLoading] = useState(true)
-  const [colors, setColors] = useState<ThemeColors>(getThemeColors())
+  const [colors, setColors] = useState<ThemeColors>({
+    primaryBase: '#2563eb',
+    grayBase: '#64748b',
+    secondaryBase: '#64748b',
+    successBase: '#16a34a',
+    warningBase: '#d97706',
+    dangerBase: '#dc2626',
+    fontFamily: 'Inter',
+    textPrimary: '#0f172a',
+    textSecondary: '#475569',
+    textTertiary: '#64748b',
+    textOnColor: '#ffffff',
+    textOnColorSecondary: '#ffffff'
+  })
   const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null)
   const [popoverPosition, setPopoverPosition] = useState<{ x: number; y: number; direction: 'up' | 'down' } | null>(null)
   const router = useRouter()
@@ -84,7 +97,22 @@ export default function PersonalizacionPage() {
       if (data.success) {
         setUsuario(data.data)
         // Cargar colores guardados del usuario actual
-        setColors(getThemeColors(data.data.id))
+        const userColors = await getThemeColors(data.data.id)
+        // Asegurar que todos los campos estén presentes (merge con defaults)
+        setColors({
+          primaryBase: userColors.primaryBase || '#2563eb',
+          grayBase: userColors.grayBase || '#64748b',
+          secondaryBase: userColors.secondaryBase || '#64748b',
+          successBase: userColors.successBase || '#16a34a',
+          warningBase: userColors.warningBase || '#d97706',
+          dangerBase: userColors.dangerBase || '#dc2626',
+          fontFamily: userColors.fontFamily || 'Inter',
+          textPrimary: userColors.textPrimary || '#0f172a',
+          textSecondary: userColors.textSecondary || '#475569',
+          textTertiary: userColors.textTertiary || '#64748b',
+          textOnColor: userColors.textOnColor || '#ffffff',
+          textOnColorSecondary: userColors.textOnColorSecondary || '#ffffff'
+        })
       } else {
         router.push('/')
       }
@@ -96,14 +124,14 @@ export default function PersonalizacionPage() {
     }
   }
 
-  const handleColorChange = (colorKey: keyof ThemeColors, value: string) => {
+  const handleColorChange = async (colorKey: keyof ThemeColors, value: string) => {
     const newColors = { ...colors, [colorKey]: value }
     setColors(newColors)
     // Aplicar inmediatamente para preview
     applyThemeColors(newColors)
     // Guardar automáticamente cuando se cambia un color
     if (usuario) {
-      saveThemeColors(newColors, usuario.id)
+      await saveThemeColors(newColors, usuario.id)
     }
   }
 
@@ -122,18 +150,33 @@ export default function PersonalizacionPage() {
     }
   }, [activeColorPicker])
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (usuario) {
-      saveThemeColors(colors, usuario.id)
+      await saveThemeColors(colors, usuario.id)
       toast.success('Colores guardados exitosamente')
     }
   }
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (confirm('¿Estás seguro de que quieres restaurar los colores por defecto?')) {
       if (usuario) {
-        resetThemeColors(usuario.id)
-        setColors(getThemeColors(usuario.id))
+        await resetThemeColors(usuario.id)
+        const userColors = await getThemeColors(usuario.id)
+        // Asegurar que todos los campos estén presentes (merge con defaults)
+        setColors({
+          primaryBase: userColors.primaryBase || '#2563eb',
+          grayBase: userColors.grayBase || '#64748b',
+          secondaryBase: userColors.secondaryBase || '#64748b',
+          successBase: userColors.successBase || '#16a34a',
+          warningBase: userColors.warningBase || '#d97706',
+          dangerBase: userColors.dangerBase || '#dc2626',
+          fontFamily: userColors.fontFamily || 'Inter',
+          textPrimary: userColors.textPrimary || '#0f172a',
+          textSecondary: userColors.textSecondary || '#475569',
+          textTertiary: userColors.textTertiary || '#64748b',
+          textOnColor: userColors.textOnColor || '#ffffff',
+          textOnColorSecondary: userColors.textOnColorSecondary || '#ffffff'
+        })
         toast.success('Colores restaurados')
       }
     }
@@ -160,13 +203,13 @@ export default function PersonalizacionPage() {
             <div className="flex items-center">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="mr-4 p-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300"
+                className="mr-4 p-2 rounded-lg bg-gray-200 text-secondary hover:bg-gray-300"
               >
                 <ArrowLeftIcon className="h-5 w-5" />
               </button>
               <div className="flex items-center">
                 <PaintBrushIcon className="h-6 w-6 text-primary-600 mr-2" />
-                <h1 className="text-xl font-semibold text-gray-900">Personalización</h1>
+                <h1 className="text-xl font-semibold text-primary">Personalización</h1>
               </div>
             </div>
           </div>
@@ -177,39 +220,44 @@ export default function PersonalizacionPage() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="card">
           <div className="card-header">
-            <h2 className="text-2xl font-bold text-gray-900">Personalización</h2>
+            <h2 className="text-2xl font-bold text-primary">Personalización</h2>
           </div>
 
           <div className="space-y-8">
             {/* Perfiles Preestablecidos - Arcoíris */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Colores del Arcoíris</h3>
-              <p className="text-sm text-gray-600 mb-4">
+              <h3 className="text-lg font-semibold text-primary mb-2">Colores del Arcoíris</h3>
+              <p className="text-sm text-secondary mb-4">
                 Perfiles claros basados en los colores del arcoíris
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {themePresets.filter(p => p.id.startsWith('rainbow-')).map((preset) => (
                   <button
                     key={preset.id}
-                    onClick={() => {
+                    onClick={async () => {
                       if (usuario) {
-                        setColors(preset.colors)
-                        applyThemeColors(preset.colors)
-                        saveThemeColors(preset.colors, usuario.id)
+                        // Asegurar que todos los campos estén presentes
+                        const presetColors: ThemeColors = {
+                          ...preset.colors,
+                          textOnColorSecondary: preset.colors.textOnColorSecondary || '#ffffff'
+                        }
+                        setColors(presetColors)
+                        applyThemeColors(presetColors)
+                        await saveThemeColors(presetColors, usuario.id)
                         toast.success(`Perfil "${preset.name}" aplicado`)
                       }
                     }}
                     className="p-4 bg-gray-100 rounded-lg border-2 border-gray-300 hover:border-primary-500 transition-all text-left group"
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-gray-900">{preset.name}</span>
+                      <span className="text-sm font-semibold text-primary">{preset.name}</span>
                       <div
                         className="w-6 h-6 rounded-full border-2 border-gray-300"
                         style={{ backgroundColor: preset.colors.primaryBase }}
                         title="Color primario"
                       />
                     </div>
-                    <p className="text-xs text-gray-600">{preset.description}</p>
+                    <p className="text-xs text-secondary">{preset.description}</p>
                     <div className="mt-2 h-2 rounded" style={{ backgroundColor: preset.colors.primaryBase }} />
                   </button>
                 ))}
@@ -218,33 +266,38 @@ export default function PersonalizacionPage() {
 
             {/* Perfiles Preestablecidos - Modo Oscuro */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Modo Oscuro</h3>
-              <p className="text-sm text-gray-600 mb-4">
+              <h3 className="text-lg font-semibold text-primary mb-2">Modo Oscuro</h3>
+              <p className="text-sm text-secondary mb-4">
                 Temas oscuros con acentos de colores del arcoíris
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {themePresets.filter(p => p.id.startsWith('dark-')).map((preset) => (
                   <button
                     key={preset.id}
-                    onClick={() => {
+                    onClick={async () => {
                       if (usuario) {
-                        setColors(preset.colors)
-                        applyThemeColors(preset.colors)
-                        saveThemeColors(preset.colors, usuario.id)
+                        // Asegurar que todos los campos estén presentes
+                        const presetColors: ThemeColors = {
+                          ...preset.colors,
+                          textOnColorSecondary: preset.colors.textOnColorSecondary || '#ffffff'
+                        }
+                        setColors(presetColors)
+                        applyThemeColors(presetColors)
+                        await saveThemeColors(presetColors, usuario.id)
                         toast.success(`Perfil "${preset.name}" aplicado`)
                       }
                     }}
                     className="p-4 bg-gray-800 rounded-lg border-2 border-gray-700 hover:border-primary-500 transition-all text-left group"
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-gray-100">{preset.name}</span>
+                      <span className="text-sm font-semibold text-on-color">{preset.name}</span>
                       <div
                         className="w-6 h-6 rounded-full border-2 border-gray-600"
                         style={{ backgroundColor: preset.colors.primaryBase }}
                         title="Color primario"
                       />
                     </div>
-                    <p className="text-xs text-gray-400">{preset.description}</p>
+                    <p className="text-xs text-tertiary">{preset.description}</p>
                     <div className="mt-2 h-2 rounded" style={{ backgroundColor: preset.colors.primaryBase }} />
                   </button>
                 ))}
@@ -253,11 +306,11 @@ export default function PersonalizacionPage() {
 
             {/* Preview - Sección principal */}
             <div className="p-6 bg-gray-300 rounded-lg relative">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Vista Previa</h3>
+              <h3 className="text-lg font-semibold text-primary mb-4">Vista Previa</h3>
               <div className="space-y-6">
                 {/* Botones */}
                 <div>
-                  <p className="text-sm font-medium text-gray-700 mb-3">Botones</p>
+                  <p className="text-sm font-medium text-secondary mb-3">Botones</p>
                   <div className="flex flex-wrap items-center gap-4">
                     <button 
                       className="btn btn-primary cursor-pointer relative"
@@ -307,12 +360,24 @@ export default function PersonalizacionPage() {
                     >
                       Botón Peligro
                     </button>
+                    <button 
+                      className="btn btn-secondary cursor-pointer relative"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setPopoverPosition(calculatePopoverPosition(rect))
+                        setActiveColorPicker('secondaryBase')
+                      }}
+                      title="Click para editar color secundario"
+                      style={{ color: colors.textOnColorSecondary || '#ffffff' }}
+                    >
+                      Botón Secundario
+                    </button>
                   </div>
                 </div>
 
                 {/* Colores de Texto - Sección dedicada */}
                 <div>
-                  <p className="text-sm font-medium text-gray-700 mb-3">Colores de Texto</p>
+                  <p className="text-sm font-medium text-secondary mb-3">Colores de Texto</p>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       className="p-4 bg-gray-100 rounded-lg border-2 border-gray-300 hover:border-primary-500 transition-colors text-left"
@@ -323,13 +388,13 @@ export default function PersonalizacionPage() {
                       }}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-gray-900">Texto Principal</span>
+                        <span className="text-sm font-semibold text-primary">Texto Principal</span>
                         <div 
                           className="w-8 h-8 rounded border-2 border-gray-300"
                           style={{ backgroundColor: colors.textPrimary || '#0f172a' }}
                         />
                       </div>
-                      <p className="text-xs text-gray-600">Color para textos principales sobre fondos</p>
+                      <p className="text-xs text-secondary">Color para textos principales sobre fondos</p>
                     </button>
                     
                     <button
@@ -341,13 +406,13 @@ export default function PersonalizacionPage() {
                       }}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-gray-900">Texto Secundario</span>
+                        <span className="text-sm font-semibold text-primary">Texto Secundario</span>
                         <div 
                           className="w-8 h-8 rounded border-2 border-gray-300"
                           style={{ backgroundColor: colors.textSecondary || '#475569' }}
                         />
                       </div>
-                      <p className="text-xs text-gray-600">Color para textos secundarios sobre fondos</p>
+                      <p className="text-xs text-secondary">Color para textos secundarios sobre fondos</p>
                     </button>
                     
                     <button
@@ -359,13 +424,13 @@ export default function PersonalizacionPage() {
                       }}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-gray-900">Texto Terciario</span>
+                        <span className="text-sm font-semibold text-primary">Texto Terciario</span>
                         <div 
                           className="w-8 h-8 rounded border-2 border-gray-300"
                           style={{ backgroundColor: colors.textTertiary || '#64748b' }}
                         />
                       </div>
-                      <p className="text-xs text-gray-600">Color para textos terciarios sobre fondos</p>
+                      <p className="text-xs text-secondary">Color para textos terciarios sobre fondos</p>
                     </button>
                     
                     <button
@@ -379,23 +444,101 @@ export default function PersonalizacionPage() {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-semibold" style={{ color: colors.textOnColor || '#ffffff' }}>
-                          Texto sobre Botones
+                          Texto sobre Botones Primarios
                         </span>
-                        <div 
-                          className="w-8 h-8 rounded border-2 border-white/50"
-                          style={{ backgroundColor: colors.textOnColor || '#ffffff' }}
-                        />
+                        <div className="flex gap-2">
+                          <div 
+                            className="w-8 h-8 rounded border-2 border-white/50 cursor-pointer"
+                            style={{ backgroundColor: colors.textOnColor || '#ffffff' }}
+                            title="Color sobre botón primario - Click para editar"
+                            onClick={async (e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              const rect = e.currentTarget.getBoundingClientRect()
+                              setPopoverPosition(calculatePopoverPosition(rect))
+                              setActiveColorPicker('textOnColor')
+                            }}
+                          />
+                        </div>
                       </div>
-                      <p className="text-xs opacity-90" style={{ color: colors.textOnColor || '#ffffff' }}>
-                        Color para texto sobre botones y elementos de color
+                      <p className="text-xs opacity-90 mb-2" style={{ color: colors.textOnColor || '#ffffff' }}>
+                        Color para texto sobre botones primarios, éxito, advertencia y peligro
                       </p>
+                      <button
+                        type="button"
+                        className="px-3 py-1 rounded text-xs font-medium transition-colors cursor-pointer"
+                        style={{ 
+                          backgroundColor: `rgb(var(--color-primary-600))`,
+                          color: colors.textOnColor || '#ffffff'
+                        }}
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          const rect = e.currentTarget.getBoundingClientRect()
+                          setPopoverPosition(calculatePopoverPosition(rect))
+                          setActiveColorPicker('textOnColor')
+                        }}
+                      >
+                        Botón Primario
+                      </button>
+                    </button>
+                    
+                    <button
+                      className="p-4 bg-secondary-600 rounded-lg border-2 border-secondary-700 hover:border-secondary-400 transition-colors text-left"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setPopoverPosition(calculatePopoverPosition(rect))
+                        setActiveColorPicker('textOnColorSecondary')
+                      }}
+                      style={{ 
+                        backgroundColor: `rgb(var(--color-secondary-600))`,
+                        color: colors.textOnColorSecondary || '#ffffff'
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-semibold" style={{ color: colors.textOnColorSecondary || '#ffffff' }}>
+                          Texto sobre Botón Secundario
+                        </span>
+                        <div className="flex gap-2">
+                          <div 
+                            className="w-8 h-8 rounded border-2 border-white/50 cursor-pointer"
+                            style={{ backgroundColor: colors.textOnColorSecondary || '#ffffff' }}
+                            title="Color sobre botón secundario - Click para editar"
+                            onClick={async (e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              const rect = e.currentTarget.getBoundingClientRect()
+                              setPopoverPosition(calculatePopoverPosition(rect))
+                              setActiveColorPicker('textOnColorSecondary')
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs opacity-90 mb-2" style={{ color: colors.textOnColorSecondary || '#ffffff' }}>
+                        Color para texto sobre botones secundarios
+                      </p>
+                      <button
+                        type="button"
+                        className="px-3 py-1 rounded text-xs font-medium transition-colors cursor-pointer"
+                        style={{ 
+                          backgroundColor: `rgb(var(--color-secondary-600))`,
+                          color: colors.textOnColorSecondary || '#ffffff'
+                        }}
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          const rect = e.currentTarget.getBoundingClientRect()
+                          setPopoverPosition(calculatePopoverPosition(rect))
+                          setActiveColorPicker('textOnColorSecondary')
+                        }}
+                      >
+                        Botón Secundario
+                      </button>
                     </button>
                   </div>
                 </div>
 
                 {/* Escalas de grises para fondos */}
                 <div>
-                  <p className="text-sm font-medium text-gray-700 mb-3">Escalas de Grises (Click para editar)</p>
+                  <p className="text-sm font-medium text-secondary mb-3">Escalas de Grises (Click para editar)</p>
                   <div className="space-y-3">
                     {/* Fondo de página */}
                     <div 
@@ -408,7 +551,7 @@ export default function PersonalizacionPage() {
                       title="Click para editar escala de grises"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-900">Fondo de página (gray-50)</span>
+                        <span className="text-sm font-medium text-primary">Fondo de página (gray-50)</span>
                         <div className="flex gap-1">
                           {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((shade) => (
                             <div
@@ -422,8 +565,7 @@ export default function PersonalizacionPage() {
                       </div>
                       <div className="space-y-1">
                         <p 
-                          className="text-xs cursor-pointer" 
-                          style={{ color: colors.textPrimary || '#0f172a' }}
+                          className="text-xs cursor-pointer text-primary" 
                           onClick={(e) => {
                             e.stopPropagation()
                             const rect = e.currentTarget.getBoundingClientRect()
@@ -435,8 +577,7 @@ export default function PersonalizacionPage() {
                           Texto principal
                         </p>
                         <p 
-                          className="text-xs cursor-pointer" 
-                          style={{ color: colors.textSecondary || '#475569' }}
+                          className="text-xs cursor-pointer text-secondary" 
                           onClick={(e) => {
                             e.stopPropagation()
                             const rect = e.currentTarget.getBoundingClientRect()
@@ -448,8 +589,7 @@ export default function PersonalizacionPage() {
                           Texto secundario
                         </p>
                         <p 
-                          className="text-xs cursor-pointer" 
-                          style={{ color: colors.textTertiary || '#64748b' }}
+                          className="text-xs cursor-pointer text-tertiary" 
                           onClick={(e) => {
                             e.stopPropagation()
                             const rect = e.currentTarget.getBoundingClientRect()
@@ -474,7 +614,7 @@ export default function PersonalizacionPage() {
                       title="Click para editar escala de grises"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-900">Header (gray-100)</span>
+                        <span className="text-sm font-medium text-primary">Header (gray-100)</span>
                         <div className="flex gap-1">
                           {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((shade) => (
                             <div
@@ -487,8 +627,7 @@ export default function PersonalizacionPage() {
                         </div>
                       </div>
                       <p 
-                        className="text-xs font-medium" 
-                        style={{ color: colors.textPrimary || '#0f172a' }}
+                        className="text-xs font-medium text-primary" 
                         onClick={(e) => {
                           e.stopPropagation()
                           const rect = e.currentTarget.getBoundingClientRect()
@@ -512,7 +651,7 @@ export default function PersonalizacionPage() {
                       title="Click para editar escala de grises"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-900">Card (gray-100)</span>
+                        <span className="text-sm font-medium text-primary">Card (gray-100)</span>
                         <div className="flex gap-1">
                           {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((shade) => (
                             <div
@@ -525,8 +664,7 @@ export default function PersonalizacionPage() {
                         </div>
                       </div>
                       <p 
-                        className="text-xs" 
-                        style={{ color: colors.textPrimary || '#0f172a' }}
+                        className="text-xs text-primary" 
                         onClick={(e) => {
                           e.stopPropagation()
                           const rect = e.currentTarget.getBoundingClientRect()
@@ -543,7 +681,7 @@ export default function PersonalizacionPage() {
 
                 {/* Tipografía */}
                 <div>
-                  <p className="text-sm font-medium text-gray-700 mb-3">Tipografía</p>
+                  <p className="text-sm font-medium text-secondary mb-3">Tipografía</p>
                   <div 
                     className="p-4 bg-gray-100 rounded border border-gray-300 cursor-pointer hover:border-gray-400 transition-colors"
                     onClick={(e) => {
@@ -555,14 +693,14 @@ export default function PersonalizacionPage() {
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-sm font-medium text-gray-900 block mb-1">Fuente actual</span>
-                        <span className="text-lg" style={{ fontFamily: colors.fontFamily || 'Inter' }}>
+                        <span className="text-sm font-medium text-primary block mb-1">Fuente actual</span>
+                        <span className="text-lg text-primary" style={{ fontFamily: colors.fontFamily || 'Inter' }}>
                           {colors.fontFamily || 'Inter'}
                         </span>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-500 mb-1">Ejemplo de texto</p>
-                        <p className="text-sm" style={{ fontFamily: colors.fontFamily || 'Inter' }}>
+                        <p className="text-xs text-tertiary mb-1">Ejemplo de texto</p>
+                        <p className="text-sm text-secondary" style={{ fontFamily: colors.fontFamily || 'Inter' }}>
                           The quick brown fox jumps over the lazy dog
                         </p>
                       </div>
@@ -586,7 +724,7 @@ export default function PersonalizacionPage() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold text-gray-900">
+                    <h4 className="text-sm font-semibold text-primary">
                       {activeColorPicker === 'primaryBase' && 'Color Primario'}
                       {activeColorPicker === 'secondaryBase' && 'Botón Secundario'}
                       {activeColorPicker === 'successBase' && 'Botón Éxito'}
@@ -597,14 +735,15 @@ export default function PersonalizacionPage() {
                       {activeColorPicker === 'textPrimary' && 'Color de Texto Principal (sobre fondos)'}
                       {activeColorPicker === 'textSecondary' && 'Color de Texto Secundario (sobre fondos)'}
                       {activeColorPicker === 'textTertiary' && 'Color de Texto Terciario (sobre fondos)'}
-                      {activeColorPicker === 'textOnColor' && 'Color de Texto sobre Botones'}
+                      {activeColorPicker === 'textOnColor' && 'Color de Texto sobre Botones Primarios'}
+                      {activeColorPicker === 'textOnColorSecondary' && 'Color de Texto sobre Botón Secundario'}
                     </h4>
                     <button
                       onClick={() => {
                         setActiveColorPicker(null)
                         setPopoverPosition(null)
                       }}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-tertiary hover:text-secondary"
                     >
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -628,7 +767,7 @@ export default function PersonalizacionPage() {
                               onClick={() => handleColorChange('fontFamily', font.value)}
                             >
                               <div className="flex items-center justify-between">
-                                <span className="font-medium text-gray-900" style={{ fontFamily: font.value }}>
+                                <span className="font-medium text-primary" style={{ fontFamily: font.value }}>
                                   {font.label}
                                 </span>
                                 {colors.fontFamily === font.value && (
@@ -637,14 +776,14 @@ export default function PersonalizacionPage() {
                                   </svg>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-600 mt-1" style={{ fontFamily: font.value }}>
+                              <p className="text-sm text-secondary mt-1" style={{ fontFamily: font.value }}>
                                 The quick brown fox jumps over the lazy dog
                               </p>
                             </div>
                           ))}
                         </div>
                       </div>
-                    ) : activeColorPicker === 'textPrimary' || activeColorPicker === 'textSecondary' || activeColorPicker === 'textTertiary' || activeColorPicker === 'textOnColor' ? (
+                    ) : activeColorPicker === 'textPrimary' || activeColorPicker === 'textSecondary' || activeColorPicker === 'textTertiary' || activeColorPicker === 'textOnColor' || activeColorPicker === 'textOnColorSecondary' ? (
                       /* Selector de color de texto */
                       <div className="space-y-3">
                         <div className="flex items-center space-x-3">
@@ -659,7 +798,7 @@ export default function PersonalizacionPage() {
                               type="text"
                               value={colors[activeColorPicker as keyof ThemeColors] as string}
                               onChange={(e) => handleColorChange(activeColorPicker as keyof ThemeColors, e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm text-primary"
                               placeholder="#000000"
                             />
                           </div>
@@ -669,6 +808,8 @@ export default function PersonalizacionPage() {
                           style={{ 
                             backgroundColor: activeColorPicker === 'textOnColor' 
                               ? 'rgb(var(--color-primary-600))' 
+                              : activeColorPicker === 'textOnColorSecondary'
+                              ? 'rgb(var(--color-secondary-600))'
                               : 'rgb(var(--color-gray-50))' 
                           }}
                         >
@@ -678,9 +819,18 @@ export default function PersonalizacionPage() {
                           >
                             Ejemplo de texto con este color
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p 
+                            className="text-xs" 
+                            style={{ 
+                              color: activeColorPicker === 'textOnColor' || activeColorPicker === 'textOnColorSecondary' 
+                                ? colors[activeColorPicker as keyof ThemeColors] as string 
+                                : undefined 
+                            }}
+                          >
                             {activeColorPicker === 'textOnColor' 
-                              ? 'Este color se aplicará al texto sobre botones y elementos de color en toda la aplicación'
+                              ? 'Este color se aplicará al texto sobre botones primarios, éxito, advertencia y peligro en toda la aplicación'
+                              : activeColorPicker === 'textOnColorSecondary'
+                              ? 'Este color se aplicará al texto sobre botones secundarios en toda la aplicación'
                               : `Este color se aplicará a todos los textos ${activeColorPicker === 'textPrimary' ? 'principales' : activeColorPicker === 'textSecondary' ? 'secundarios' : 'terciarios'} sobre fondos de la aplicación`
                             }
                           </p>
@@ -700,7 +850,7 @@ export default function PersonalizacionPage() {
                               type="text"
                               value={colors[activeColorPicker as keyof ThemeColors] as string}
                               onChange={(e) => handleColorChange(activeColorPicker as keyof ThemeColors, e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm text-primary"
                               placeholder="#000000"
                             />
                           </div>
@@ -708,7 +858,7 @@ export default function PersonalizacionPage() {
                         
                         {/* Vista previa mini de la escala */}
                         <div>
-                          <p className="text-xs text-gray-500 mb-2">Vista previa de la escala:</p>
+                          <p className="text-xs text-tertiary mb-2">Vista previa de la escala:</p>
                           <div className="grid grid-cols-10 gap-1">
                             {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((shade) => {
                               let colorName = 'gray'

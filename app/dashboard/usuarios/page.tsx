@@ -482,13 +482,13 @@ export default function UsuariosPage() {
             <div className="flex items-center">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="mr-4 p-2 rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100"
+                className="mr-4 p-2 rounded-lg bg-gray-50 text-secondary hover:bg-gray-100"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <h1 className="text-xl font-semibold text-gray-900">Gestión de Usuarios</h1>
+              <h1 className="text-xl font-semibold text-primary">Gestión de Usuarios</h1>
             </div>
             
             <button
@@ -509,7 +509,7 @@ export default function UsuariosPage() {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-tertiary" />
                 <input
                   type="text"
                   placeholder="Buscar por nombre, email, teléfono..."
@@ -543,22 +543,22 @@ export default function UsuariosPage() {
             <table className="min-w-full divide-y divide-secondary-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">
                     Usuario
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">
                     Contacto
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">
                     Rol
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">
                     Sucursales
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">
                     Último Acceso
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">
                     Acciones
                   </th>
                 </tr>
@@ -572,23 +572,23 @@ export default function UsuariosPage() {
                           <UserGroupIcon className="h-5 w-5 text-primary-600" />
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-primary">
                             {usuario.nombre} {usuario.apellido}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-tertiary">
                             {usuario.activo ? 'Activo' : 'Inactivo'}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900 flex items-center mb-1">
-                        <EnvelopeIcon className="h-4 w-4 mr-2 text-gray-400" />
+                      <div className="text-sm text-primary flex items-center mb-1">
+                        <EnvelopeIcon className="h-4 w-4 mr-2 text-tertiary" />
                         {usuario.email}
                       </div>
                       {usuario.telefono && (
-                        <div className="text-sm text-gray-600 flex items-center">
-                          <PhoneIcon className="h-4 w-4 mr-2 text-gray-400" />
+                        <div className="text-sm text-secondary flex items-center">
+                          <PhoneIcon className="h-4 w-4 mr-2 text-tertiary" />
                           {usuario.telefono}
                         </div>
                       )}
@@ -603,7 +603,7 @@ export default function UsuariosPage() {
                         {usuario.sucursales.map(sucursal => (
                           <span
                             key={sucursal.id}
-                            className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800"
+                            className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-primary"
                           >
                             <BuildingOfficeIcon className="h-3 w-3 mr-1" />
                             {sucursal.nombre}
@@ -611,7 +611,7 @@ export default function UsuariosPage() {
                         ))}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-tertiary">
                       {usuario.ultimoAcceso 
                         ? new Date(usuario.ultimoAcceso).toLocaleDateString('es-ES', {
                             year: 'numeric',
@@ -626,7 +626,7 @@ export default function UsuariosPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => handleEdit(usuario)}
-                        className="text-gray-600 hover:text-gray-900"
+                        className="text-secondary hover:text-primary"
                         title="Editar usuario"
                       >
                         <PencilIcon className="h-4 w-4" />
@@ -640,11 +640,11 @@ export default function UsuariosPage() {
 
           {filteredUsuarios.length === 0 && (
             <div className="text-center py-12">
-              <UserGroupIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <UserGroupIcon className="h-12 w-12 text-tertiary mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-primary mb-2">
                 No se encontraron usuarios
               </h3>
-              <p className="text-gray-500">
+              <p className="text-tertiary">
                 {searchTerm || filterRol ? 'Intenta con otros filtros' : 'Crea tu primer usuario'}
               </p>
             </div>
@@ -658,7 +658,7 @@ export default function UsuariosPage() {
           <div className="bg-gray-100 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
+                <h2 className="text-xl font-semibold text-primary">
                   {editingUsuario ? 'Editar Usuario' : 'Nuevo Usuario'}
                 </h2>
                 <button
@@ -667,7 +667,7 @@ export default function UsuariosPage() {
                     setEditingUsuario(null)
                     resetForm()
                   }}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-tertiary hover:text-secondary"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -678,7 +678,7 @@ export default function UsuariosPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Nombre *
                     </label>
                     <input
@@ -692,7 +692,7 @@ export default function UsuariosPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Apellido *
                     </label>
                     <input
@@ -708,7 +708,7 @@ export default function UsuariosPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Email *
                     </label>
                     <input
@@ -721,14 +721,14 @@ export default function UsuariosPage() {
                       disabled={!!editingUsuario}
                     />
                     {editingUsuario && (
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-tertiary mt-1">
                         El email no se puede modificar
                       </p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Teléfono
                     </label>
                     <input
@@ -743,7 +743,7 @@ export default function UsuariosPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Rol *
                     </label>
                     <select
@@ -761,7 +761,7 @@ export default function UsuariosPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       {editingUsuario ? 'Nueva Contraseña (dejar vacío para no cambiar)' : 'Contraseña *'}
                     </label>
                     <input
@@ -777,12 +777,12 @@ export default function UsuariosPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-secondary mb-2">
                     Sucursales * (selecciona al menos una)
                   </label>
                   <div className="border border-gray-300 rounded-lg p-4 max-h-48 overflow-y-auto">
                     {sucursales.length === 0 ? (
-                      <p className="text-sm text-gray-500">No hay sucursales disponibles</p>
+                      <p className="text-sm text-tertiary">No hay sucursales disponibles</p>
                     ) : (
                       <div className="space-y-2">
                         {sucursales.map(sucursal => (
@@ -793,7 +793,7 @@ export default function UsuariosPage() {
                               onChange={() => toggleSucursal(sucursal.id)}
                               className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                             />
-                            <span className="ml-2 text-sm text-gray-700">
+                            <span className="ml-2 text-sm text-secondary">
                               {sucursal.nombre}
                             </span>
                           </label>
@@ -802,7 +802,7 @@ export default function UsuariosPage() {
                     )}
                   </div>
                   {formData.sucursales.length > 0 && (
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-tertiary mt-2">
                       {formData.sucursales.length} sucursal(es) seleccionada(s)
                     </p>
                   )}

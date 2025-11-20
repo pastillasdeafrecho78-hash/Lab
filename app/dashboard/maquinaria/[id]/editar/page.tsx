@@ -396,13 +396,13 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
             <div className="flex items-center">
               <button
                 onClick={() => router.push('/dashboard/maquinaria')}
-                className="mr-4 p-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300"
+                className="mr-4 p-2 rounded-lg bg-gray-200 text-secondary hover:bg-gray-300"
               >
                 <ArrowLeftIcon className="h-5 w-5" />
               </button>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">Editar Maquinaria</h1>
-                <p className="text-sm text-gray-500">
+                <h1 className="text-xl font-semibold text-primary">Editar Maquinaria</h1>
+                <p className="text-sm text-tertiary">
                   {maquinaria.nombre} · {maquinaria.sucursal.nombre}
                 </p>
               </div>
@@ -419,11 +419,11 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
           {/* Información General y Sucursal */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="card">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Información general</h2>
+              <h2 className="text-lg font-semibold text-primary mb-4">Información general</h2>
 
               <form className="space-y-6" onSubmit={handleSubmit}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-secondary mb-2">
                     Nombre *
                   </label>
                   <input
@@ -438,7 +438,7 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Marca
                     </label>
                     <input
@@ -451,7 +451,7 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Modelo
                     </label>
                     <input
@@ -466,7 +466,7 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Número de serie
                     </label>
                     <input
@@ -479,7 +479,7 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Estado
                     </label>
                     <div className="flex items-center gap-3">
@@ -489,7 +489,7 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
                         className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition ${
                           formData.activa
                             ? 'border-success-500 bg-success-50 text-success-700'
-                            : 'border-gray-300 text-gray-500 hover:border-success-300'
+                            : 'border-gray-300 text-tertiary hover:border-success-300'
                         }`}
                       >
                         <CheckCircleIcon className="h-5 w-5" />
@@ -501,7 +501,7 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
                         className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition ${
                           !formData.activa
                             ? 'border-danger-500 bg-danger-50 text-danger-700'
-                            : 'border-gray-300 text-gray-500 hover:border-danger-300'
+                            : 'border-gray-300 text-tertiary hover:border-danger-300'
                         }`}
                       >
                         <XCircleIcon className="h-5 w-5" />
@@ -532,9 +532,9 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
             </div>
 
             <div className="card">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Sucursal asignada</h2>
-              <div className="space-y-2 text-sm text-gray-600">
-                <p className="font-medium text-gray-900">{maquinaria.sucursal.nombre}</p>
+              <h2 className="text-lg font-semibold text-primary mb-4">Sucursal asignada</h2>
+              <div className="space-y-2 text-sm text-secondary">
+                <p className="font-medium text-primary">{maquinaria.sucursal.nombre}</p>
                 {maquinaria.sucursal.direccion && (
                   <p>{maquinaria.sucursal.direccion}</p>
                 )}
@@ -557,13 +557,13 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
               className="w-full flex items-center justify-between mb-4"
             >
               <div className="flex items-center gap-2">
-                <BeakerIcon className="h-5 w-5 text-gray-500" />
-                <h2 className="text-lg font-semibold text-gray-900">Asignar Pruebas</h2>
+                <BeakerIcon className="h-5 w-5 text-tertiary" />
+                <h2 className="text-lg font-semibold text-primary">Asignar Pruebas</h2>
               </div>
               {showCatalog ? (
-                <ChevronUpIcon className="h-5 w-5 text-gray-500" />
+                <ChevronUpIcon className="h-5 w-5 text-tertiary" />
               ) : (
-                <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+                <ChevronDownIcon className="h-5 w-5 text-tertiary" />
               )}
             </button>
 
@@ -572,7 +572,7 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
                 {loadingCatalog ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-                    <p className="text-sm text-gray-500 mt-2">Cargando catálogo...</p>
+                    <p className="text-sm text-tertiary mt-2">Cargando catálogo...</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
@@ -580,12 +580,12 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
                       {/* Categorías disponibles para asignar */}
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-md font-medium text-gray-700">Categorías</h3>
-                          <span className="text-sm text-gray-500">{categorias.length} disponibles</span>
+                          <h3 className="text-md font-medium text-secondary">Categorías</h3>
+                          <span className="text-sm text-tertiary">{categorias.length} disponibles</span>
                         </div>
                         <div className="space-y-2 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-3">
                           {categorias.length === 0 ? (
-                            <p className="text-sm text-gray-500 text-center py-4">
+                            <p className="text-sm text-tertiary text-center py-4">
                               No hay categorías disponibles
                             </p>
                           ) : (
@@ -611,11 +611,11 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
                                     onChange={() => toggleCategoria(categoria.id)}
                                   />
                                   <div className="flex-1">
-                                    <p className="text-sm font-medium text-gray-900">{categoria.nombre}</p>
+                                    <p className="text-sm font-medium text-primary">{categoria.nombre}</p>
                                     {categoria.descripcion && (
-                                      <p className="text-xs text-gray-500 mt-1">{categoria.descripcion}</p>
+                                      <p className="text-xs text-tertiary mt-1">{categoria.descripcion}</p>
                                     )}
-                                    <p className="text-xs text-gray-400 mt-1">
+                                    <p className="text-xs text-tertiary mt-1">
                                       {categoria.analitos.length} parámetros
                                     </p>
                                   </div>
@@ -629,12 +629,12 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
                       {/* Parámetros disponibles para asignar */}
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-md font-medium text-gray-700">Parámetros</h3>
-                          <span className="text-sm text-gray-500">{analitos.length} disponibles</span>
+                          <h3 className="text-md font-medium text-secondary">Parámetros</h3>
+                          <span className="text-sm text-tertiary">{analitos.length} disponibles</span>
                         </div>
                         <div className="space-y-2 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-3">
                           {analitos.length === 0 ? (
-                            <p className="text-sm text-gray-500 text-center py-4">
+                            <p className="text-sm text-tertiary text-center py-4">
                               No hay parámetros disponibles
                             </p>
                           ) : (
@@ -647,7 +647,7 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
                                   className={`flex items-start gap-2 p-2 rounded text-sm cursor-pointer transition ${
                                     isSelected
                                       ? 'bg-primary-50 text-primary-900'
-                                      : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                      : 'bg-gray-50 text-secondary hover:bg-gray-100'
                                   }`}
                                 >
                                   <input
@@ -659,7 +659,7 @@ export default function EditarMaquinariaPage({ params }: { params: { id: string 
                                   <div className="flex-1">
                                     <span className="font-medium">{analito.nombre}</span>
                                     {analito.unidad && (
-                                      <span className="text-gray-500 ml-2">({analito.unidad})</span>
+                                      <span className="text-tertiary ml-2">({analito.unidad})</span>
                                     )}
                                   </div>
                                 </label>

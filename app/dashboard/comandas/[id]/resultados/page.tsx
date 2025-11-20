@@ -294,7 +294,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Comanda no encontrada</h2>
+          <h2 className="text-2xl font-bold text-primary mb-4">Comanda no encontrada</h2>
           <button
             onClick={() => router.push('/dashboard/comandas')}
             className="btn btn-primary"
@@ -315,15 +315,15 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
             <div className="flex items-center">
               <button
                 onClick={() => router.push(`/dashboard/comandas/${params.id}`)}
-                className="mr-4 p-2 rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100"
+                className="mr-4 p-2 rounded-lg bg-gray-50 text-secondary hover:bg-gray-100"
               >
                 <ArrowLeftIcon className="h-5 w-5" />
               </button>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">
+                <h1 className="text-xl font-semibold text-primary">
                   Resultados - {comanda.numeroComanda}
                 </h1>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-tertiary">
                   {comanda.cliente.nombre} {comanda.cliente.apellido}
                 </p>
               </div>
@@ -370,16 +370,16 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
         <div className="card mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-500">Tipo de Prueba</label>
-              <p className="text-gray-900">{comanda.tipoPrueba.nombre}</p>
+              <label className="text-sm font-medium text-tertiary">Tipo de Prueba</label>
+              <p className="text-primary">{comanda.tipoPrueba.nombre}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500">Sucursal</label>
-              <p className="text-gray-900">{comanda.sucursal.nombre}</p>
+              <label className="text-sm font-medium text-tertiary">Sucursal</label>
+              <p className="text-primary">{comanda.sucursal.nombre}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500">Estado</label>
-              <p className="text-gray-900">{comanda.estado.replace('_', ' ')}</p>
+              <label className="text-sm font-medium text-tertiary">Estado</label>
+              <p className="text-primary">{comanda.estado.replace('_', ' ')}</p>
             </div>
           </div>
         </div>
@@ -387,36 +387,36 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
         {/* Resultados */}
         <div className="card">
           <div className="card-header">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-primary">
               Resultados ({comanda.resultados.length}/{comanda.elementos.length})
             </h3>
           </div>
 
           {comanda.resultados.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">No hay resultados registrados</p>
+              <p className="text-tertiary">No hay resultados registrados</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-secondary-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">
                       Elemento
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">
                       Valor
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">
                       Rango Normal
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">
                       Estado
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">
                       Registrado Por
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">
                       Acciones
                     </th>
                   </tr>
@@ -426,13 +426,13 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                     const isNormal = isValorNormal(resultado.valor, resultado.rangoNormal)
                     return (
                       <tr key={resultado.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">
                           {resultado.elemento.replace('_', ' ')}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-primary">
                           {resultado.valor} {resultado.unidad}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-tertiary">
                           {resultado.rangoNormal}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -440,7 +440,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                             {isNormal ? 'Normal' : 'Fuera de Rango'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-tertiary">
                           {resultado.registradoPor.nombre} {resultado.registradoPor.apellido}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -469,10 +469,10 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
           <div className="bg-gray-100 rounded-lg max-w-md w-full">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Agregar Resultado</h2>
+                <h2 className="text-xl font-semibold text-primary">Agregar Resultado</h2>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-tertiary hover:text-secondary"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -482,7 +482,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-secondary mb-2">
                     Elemento *
                   </label>
                   <select
@@ -502,7 +502,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Valor *
                     </label>
                     <input
@@ -516,7 +516,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Unidad *
                     </label>
                     <input
@@ -531,7 +531,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-secondary mb-2">
                     Rango Normal *
                   </label>
                   <input
@@ -545,7 +545,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-secondary mb-2">
                     Observaciones
                   </label>
                   <textarea
@@ -583,10 +583,10 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
           <div className="bg-gray-100 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Agregar Resultados Múltiples</h2>
+                <h2 className="text-xl font-semibold text-primary">Agregar Resultados Múltiples</h2>
                 <button
                   onClick={() => setShowBulkModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-tertiary hover:text-secondary"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -597,13 +597,13 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
               <form onSubmit={handleBulkSubmit} className="space-y-6">
                 {bulkData.map((item, index) => (
                   <div key={item.elemento} className="border border-gray-200 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-4">
+                    <h4 className="font-medium text-primary mb-4">
                       {item.elemento.replace('_', ' ')}
                     </h4>
                     
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-secondary mb-2">
                           Valor *
                         </label>
                         <input
@@ -621,7 +621,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-secondary mb-2">
                           Unidad *
                         </label>
                         <input
@@ -639,7 +639,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-secondary mb-2">
                           Rango Normal *
                         </label>
                         <input
@@ -657,7 +657,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-secondary mb-2">
                           Observaciones
                         </label>
                         <input

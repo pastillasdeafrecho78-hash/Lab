@@ -89,6 +89,28 @@
   --color-text-secondary: #475569;
   --color-text-tertiary: #64748b;
   --color-text-on-color: #ffffff;
+  --color-text-on-color-secondary: #ffffff;
+}
+
+/* Clases de texto personalizables */
+.text-primary {
+  color: var(--color-text-primary) !important;
+}
+
+.text-secondary {
+  color: var(--color-text-secondary) !important;
+}
+
+.text-tertiary {
+  color: var(--color-text-tertiary) !important;
+}
+
+.text-on-color {
+  color: var(--color-text-on-color) !important;
+}
+
+.text-on-color-secondary {
+  color: var(--color-text-on-color-secondary) !important;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -138,6 +160,17 @@ a {
   --color-text-primary: #ffffff !important;
   --color-text-secondary: #ffffff !important;
   --color-text-tertiary: #ffffff !important;
+  --color-text-on-color: #ffffff !important;
+  --color-text-on-color-secondary: #ffffff !important;
+}
+
+/* Forzar clases de texto a blanco en modo oscuro */
+[data-dark-mode="true"] .text-primary,
+[data-dark-mode="true"] .text-secondary,
+[data-dark-mode="true"] .text-tertiary,
+[data-dark-mode="true"] .text-on-color,
+[data-dark-mode="true"] .text-on-color-secondary {
+  color: #ffffff !important;
 }
 
 [data-dark-mode="true"] .text-gray-900,
@@ -172,8 +205,8 @@ a {
 }
 
 .btn-secondary {
-  background-color: rgb(var(--color-secondary-300));
-  color: rgb(var(--color-secondary-900));
+  background-color: rgb(var(--color-secondary-600));
+  color: var(--color-text-on-color-secondary);
 }
 
 .btn-secondary:hover {

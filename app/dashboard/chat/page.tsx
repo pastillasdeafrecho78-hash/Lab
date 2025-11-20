@@ -113,7 +113,11 @@ export default function ChatPage() {
 
   useEffect(() => {
     // Aplicar colores personalizados al cargar
-    applyThemeColors(getThemeColors())
+    const loadTheme = async () => {
+      const themeColors = await getThemeColors()
+      applyThemeColors(themeColors)
+    }
+    loadTheme()
     loadData()
   }, [])
 
@@ -405,7 +409,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-900 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 text-primary overflow-hidden">
       {/* Sidebar Izquierda - Categorías */}
       <div className="w-16 bg-gray-800 flex flex-col items-center py-4 space-y-4">
         <button
@@ -413,22 +417,22 @@ export default function ChatPage() {
           className="w-12 h-12 rounded-lg bg-primary-600 flex items-center justify-center hover:bg-primary-700 transition"
           title="Volver al Dashboard"
         >
-          <UserGroupIcon className="h-6 w-6 text-white" />
+          <UserGroupIcon className="h-6 w-6 text-on-color" />
         </button>
         
         <div className="w-12 h-12 rounded-lg bg-primary-600 flex items-center justify-center hover:bg-primary-700 transition cursor-pointer" title="General">
-          <HashtagIcon className="h-6 w-6 text-white" />
+          <HashtagIcon className="h-6 w-6 text-on-color" />
         </div>
         
         {sucursales.length > 0 && (
           <div className="w-12 h-12 rounded-lg bg-primary-600 flex items-center justify-center hover:bg-primary-700 transition cursor-pointer" title="Sucursales">
-            <BuildingOfficeIcon className="h-6 w-6 text-white" />
+            <BuildingOfficeIcon className="h-6 w-6 text-on-color" />
           </div>
         )}
         
         {maquinaria.length > 0 && (
           <div className="w-12 h-12 rounded-lg bg-primary-600 flex items-center justify-center hover:bg-primary-700 transition cursor-pointer" title="Equipos">
-            <CpuChipIcon className="h-6 w-6 text-white" />
+            <CpuChipIcon className="h-6 w-6 text-on-color" />
           </div>
         )}
       </div>
@@ -436,14 +440,14 @@ export default function ChatPage() {
       {/* Lista de Canales */}
       <div className="w-60 bg-gray-700 flex flex-col">
         <div className="p-4 border-b border-gray-600">
-          <h2 className="text-sm font-semibold text-gray-300 uppercase">Canales</h2>
+          <h2 className="text-sm font-semibold text-tertiary uppercase">Canales</h2>
         </div>
         
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {/* Canales GENERAL */}
           {canalesPorCategoria.GENERAL.length > 0 && (
             <>
-              <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase flex items-center justify-between">
+              <div className="px-2 py-1 text-xs font-semibold text-tertiary uppercase flex items-center justify-between">
                 <span>General</span>
               </div>
               {canalesPorCategoria.GENERAL.map(canal => (
@@ -455,7 +459,7 @@ export default function ChatPage() {
                   onClick={() => setCanalSeleccionado(canal)}
                 >
                   <div className="flex items-center space-x-2 flex-1 min-w-0">
-                    <HashtagIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <HashtagIcon className="h-4 w-4 text-tertiary flex-shrink-0" />
                     <span className="text-sm truncate">{canal.nombre}</span>
                   </div>
                   <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1">
@@ -496,7 +500,7 @@ export default function ChatPage() {
           {/* Canales SUCURSAL */}
           {canalesPorCategoria.SUCURSAL.length > 0 && (
             <>
-              <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase flex items-center justify-between mt-4">
+              <div className="px-2 py-1 text-xs font-semibold text-tertiary uppercase flex items-center justify-between mt-4">
                 <span>Sucursales</span>
               </div>
               {canalesPorCategoria.SUCURSAL.map(canal => (
@@ -508,7 +512,7 @@ export default function ChatPage() {
                   onClick={() => setCanalSeleccionado(canal)}
                 >
                   <div className="flex items-center space-x-2 flex-1 min-w-0">
-                    <HashtagIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <HashtagIcon className="h-4 w-4 text-tertiary flex-shrink-0" />
                     <span className="text-sm truncate">{canal.nombre}</span>
                   </div>
                   <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1">
@@ -547,7 +551,7 @@ export default function ChatPage() {
           {/* Canales EQUIPO */}
           {canalesPorCategoria.EQUIPO.length > 0 && (
             <>
-              <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase flex items-center justify-between mt-4">
+              <div className="px-2 py-1 text-xs font-semibold text-tertiary uppercase flex items-center justify-between mt-4">
                 <span>Equipos</span>
               </div>
               {canalesPorCategoria.EQUIPO.map(canal => (
@@ -559,7 +563,7 @@ export default function ChatPage() {
                   onClick={() => setCanalSeleccionado(canal)}
                 >
                   <div className="flex items-center space-x-2 flex-1 min-w-0">
-                    <HashtagIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <HashtagIcon className="h-4 w-4 text-tertiary flex-shrink-0" />
                     <span className="text-sm truncate">{canal.nombre}</span>
                   </div>
                   <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1">
@@ -601,7 +605,7 @@ export default function ChatPage() {
               setFormCanal({ nombre: '', descripcion: '', categoria: 'GENERAL', sucursalId: '', equipoId: '' })
               setShowModalCrearCanal(true)
             }}
-            className="w-full mt-2 px-2 py-1.5 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded flex items-center space-x-2"
+            className="w-full mt-2 px-2 py-1.5 text-sm text-tertiary hover:text-primary hover:bg-gray-200 rounded flex items-center space-x-2"
           >
             <PlusIcon className="h-4 w-4" />
             <span>Crear Canal</span>
@@ -616,15 +620,15 @@ export default function ChatPage() {
             {/* Header del canal */}
             <div className="h-12 bg-gray-50 border-b border-gray-300 flex items-center justify-between px-4 shadow-sm">
               <div className="flex items-center space-x-2">
-                <HashtagIcon className="h-5 w-5 text-gray-500" />
+                <HashtagIcon className="h-5 w-5 text-tertiary" />
                 <h2 className="font-semibold">{canalSeleccionado.nombre}</h2>
                 {canalSeleccionado.descripcion && (
-                  <span className="text-sm text-gray-500">- {canalSeleccionado.descripcion}</span>
+                  <span className="text-sm text-tertiary">- {canalSeleccionado.descripcion}</span>
                 )}
               </div>
               <div className="flex items-center space-x-2">
                 <button className="p-1.5 hover:bg-gray-300 rounded">
-                  <Cog6ToothIcon className="h-5 w-5 text-gray-500" />
+                  <Cog6ToothIcon className="h-5 w-5 text-tertiary" />
                 </button>
               </div>
             </div>
@@ -641,7 +645,7 @@ export default function ChatPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2 mb-1">
                       <span className="font-semibold">{mensaje.remitente.nombre} {mensaje.remitente.apellido}</span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-tertiary">
                         {new Date(mensaje.fechaEnvio).toLocaleString('es-ES', {
                           day: 'numeric',
                           month: 'short',
@@ -650,7 +654,7 @@ export default function ChatPage() {
                         })}
                       </span>
                       {mensaje.editado && (
-                        <span className="text-xs text-gray-500 italic">(editado)</span>
+                        <span className="text-xs text-tertiary italic">(editado)</span>
                       )}
                     </div>
                     {mensaje.archivoUrl && (
@@ -675,7 +679,7 @@ export default function ChatPage() {
                       </div>
                     )}
                     {mensaje.contenido && (
-                      <p className="text-gray-900">{mensaje.contenido}</p>
+                      <p className="text-primary">{mensaje.contenido}</p>
                     )}
                   </div>
                 </div>
@@ -693,7 +697,7 @@ export default function ChatPage() {
                   </div>
                   <button
                     onClick={() => setArchivoAdjunto(null)}
-                    className="text-gray-500 hover:text-gray-900"
+                    className="text-tertiary hover:text-primary"
                   >
                     <XMarkIcon className="h-4 w-4" />
                   </button>
@@ -710,7 +714,7 @@ export default function ChatPage() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={subiendoArchivo}
-                  className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-300 rounded"
+                  className="p-2 text-tertiary hover:text-primary hover:bg-gray-300 rounded"
                 >
                   {subiendoArchivo ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600"></div>
@@ -729,12 +733,12 @@ export default function ChatPage() {
                     }
                   }}
                   placeholder={`Mensaje #${canalSeleccionado.nombre}`}
-                  className="flex-1 bg-gray-200 text-gray-900 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="flex-1 bg-gray-200 text-primary px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
                 <button
                   onClick={sendMessage}
                   disabled={!nuevoMensaje.trim() && !archivoAdjunto}
-                  className="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 bg-primary-600 text-on-color rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <PaperAirplaneIcon className="h-5 w-5" />
                 </button>
@@ -744,9 +748,9 @@ export default function ChatPage() {
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <HashtagIcon className="h-16 w-16 text-gray-500 mx-auto mb-4" />
+              <HashtagIcon className="h-16 w-16 text-tertiary mx-auto mb-4" />
               <h2 className="text-xl font-semibold mb-2">Selecciona un canal</h2>
-              <p className="text-gray-500">Elige un canal de la lista para comenzar a chatear</p>
+              <p className="text-tertiary">Elige un canal de la lista para comenzar a chatear</p>
             </div>
           </div>
         )}
@@ -764,7 +768,7 @@ export default function ChatPage() {
                   type="text"
                   value={formCanal.nombre}
                   onChange={(e) => setFormCanal({ ...formCanal, nombre: e.target.value })}
-                  className="w-full bg-gray-200 text-gray-900 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full bg-gray-200 text-primary px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="nombre-del-canal"
                 />
               </div>
@@ -774,7 +778,7 @@ export default function ChatPage() {
                   type="text"
                   value={formCanal.descripcion}
                   onChange={(e) => setFormCanal({ ...formCanal, descripcion: e.target.value })}
-                  className="w-full bg-gray-200 text-gray-900 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full bg-gray-200 text-primary px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="Descripción del canal"
                 />
               </div>
@@ -783,7 +787,7 @@ export default function ChatPage() {
                 <select
                   value={formCanal.categoria}
                   onChange={(e) => setFormCanal({ ...formCanal, categoria: e.target.value as any, sucursalId: '', equipoId: '' })}
-                  className="w-full bg-gray-200 text-gray-900 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full bg-gray-200 text-primary px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="GENERAL">General</option>
                   <option value="SUCURSAL">Sucursal</option>
@@ -796,7 +800,7 @@ export default function ChatPage() {
                   <select
                     value={formCanal.sucursalId}
                     onChange={(e) => setFormCanal({ ...formCanal, sucursalId: e.target.value })}
-                    className="w-full bg-gray-200 text-gray-900 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full bg-gray-200 text-primary px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="">Selecciona una sucursal</option>
                     {sucursales.map(s => (
@@ -811,7 +815,7 @@ export default function ChatPage() {
                   <select
                     value={formCanal.equipoId}
                     onChange={(e) => setFormCanal({ ...formCanal, equipoId: e.target.value })}
-                    className="w-full bg-gray-200 text-gray-900 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full bg-gray-200 text-primary px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="">Selecciona un equipo</option>
                     {maquinaria.map(m => (
@@ -850,7 +854,7 @@ export default function ChatPage() {
                   type="text"
                   value={formCanal.nombre}
                   onChange={(e) => setFormCanal({ ...formCanal, nombre: e.target.value })}
-                  className="w-full bg-gray-200 text-gray-900 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full bg-gray-200 text-primary px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
               <div>
@@ -859,7 +863,7 @@ export default function ChatPage() {
                   type="text"
                   value={formCanal.descripcion}
                   onChange={(e) => setFormCanal({ ...formCanal, descripcion: e.target.value })}
-                  className="w-full bg-gray-200 text-gray-900 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full bg-gray-200 text-primary px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
             </div>

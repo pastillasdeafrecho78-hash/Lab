@@ -207,19 +207,19 @@ export default function DashboardPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center mr-3">
-                <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5 text-on-color" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                 </svg>
               </div>
-              <h1 className="text-xl font-semibold text-gray-900">Laboratorio Comandas</h1>
+              <h1 className="text-xl font-semibold text-primary">Laboratorio Comandas</h1>
             </div>
             
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-primary">
                   {usuario.nombre} {usuario.apellido}
                 </p>
-                <p className="text-xs text-gray-500 capitalize">
+                <p className="text-xs text-tertiary capitalize">
                   {usuario.rol.replace('_', ' ').toLowerCase()}
                 </p>
               </div>
@@ -237,10 +237,10 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl font-bold text-primary mb-2">
             Bienvenido, {usuario.nombre}
           </h2>
-          <p className="text-gray-600">
+          <p className="text-secondary">
             Gestiona tu laboratorio desde el panel de control
           </p>
         </div>
@@ -253,8 +253,8 @@ export default function DashboardPage() {
                 <ClipboardDocumentListIcon className="h-6 w-6 text-primary-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Comandas Hoy</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-secondary">Comandas Hoy</p>
+                <p className="text-2xl font-bold text-primary">
                   {loading ? '...' : estadisticas.comandasHoy}
                 </p>
               </div>
@@ -267,8 +267,8 @@ export default function DashboardPage() {
                 <BuildingOfficeIcon className="h-6 w-6 text-success-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Sucursales</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-secondary">Sucursales</p>
+                <p className="text-2xl font-bold text-primary">
                   {loading ? '...' : estadisticas.sucursalesActivas}
                 </p>
               </div>
@@ -281,8 +281,8 @@ export default function DashboardPage() {
                 <CpuChipIcon className="h-6 w-6 text-warning-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Equipos Activos</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-secondary">Equipos Activos</p>
+                <p className="text-2xl font-bold text-primary">
                   {loading ? '...' : estadisticas.equiposActivos}
                 </p>
               </div>
@@ -295,8 +295,8 @@ export default function DashboardPage() {
                 <ChatBubbleLeftRightIcon className="h-6 w-6 text-danger-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Mensajes</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-secondary">Mensajes</p>
+                <p className="text-2xl font-bold text-primary">
                   {loading ? '...' : estadisticas.mensajesNoLeidos}
                 </p>
               </div>
@@ -316,13 +316,13 @@ export default function DashboardPage() {
               >
                 <div className="flex items-start">
                   <div className={`p-3 ${item.color} rounded-lg`}>
-                    <Icon className="h-6 w-6 text-white" />
+                    <Icon className="h-6 w-6 text-on-color" />
                   </div>
                   <div className="ml-4 flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    <h3 className="text-lg font-semibold text-primary mb-1">
                       {item.title}
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-secondary">
                       {item.description}
                     </p>
                   </div>

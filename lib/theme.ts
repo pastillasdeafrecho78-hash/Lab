@@ -12,7 +12,8 @@ export interface ThemeColors {
   textPrimary: string // Color de texto principal (sobre fondos)
   textSecondary: string // Color de texto secundario (sobre fondos)
   textTertiary: string // Color de texto terciario (sobre fondos)
-  textOnColor: string // Color de texto sobre botones/colores (normalmente blanco)
+  textOnColor: string // Color de texto sobre botones primarios/éxito/advertencia/peligro (normalmente blanco)
+  textOnColorSecondary: string // Color de texto sobre botón secundario
 }
 
 // Colores por defecto
@@ -27,7 +28,8 @@ const defaultColors: ThemeColors = {
   textPrimary: '#0f172a', // gray-900 - Texto sobre fondos
   textSecondary: '#475569', // gray-600 - Texto sobre fondos
   textTertiary: '#64748b', // gray-500 - Texto sobre fondos
-  textOnColor: '#ffffff' // Blanco - Texto sobre botones/colores
+  textOnColor: '#ffffff', // Blanco - Texto sobre botones primarios/éxito/advertencia/peligro
+  textOnColorSecondary: '#ffffff' // Blanco - Texto sobre botón secundario
 }
 
 // Tipografías disponibles
@@ -198,52 +200,110 @@ function hslToRgbString(h: number, s: number, l: number): string {
   return `${r}, ${g}, ${b}`
 }
 
-export function getThemeColors(userId?: string): ThemeColors {
+// Cache para evitar múltiples llamadas simultáneas
+const themeCache: { [userId: string]: { colors: ThemeColors; timestamp: number } } = {}
+const CACHE_DURATION = 30000 // 30 segundos
+const loadingPromises: { [userId: string]: Promise<ThemeColors> } = {}
+
+export async function getThemeColors(userId?: string): Promise<ThemeColors> {
   if (typeof window === 'undefined') {
     return defaultColors
   }
 
-  // Si no hay userId, intentar obtenerlo del token o usar configuración global (retrocompatibilidad)
+  // Si no hay userId, intentar obtenerlo del token
   if (!userId) {
-    // Intentar obtener userId del token almacenado
     try {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+      const { getAuthToken } = await import('@/lib/api-helpers')
+      const token = getAuthToken()
       if (token) {
         const payload = JSON.parse(atob(token.split('.')[1]))
         userId = payload.userId
       }
     } catch {
-      // Si no se puede obtener, usar configuración global (para retrocompatibilidad)
-      const saved = localStorage.getItem('theme-colors')
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved)
-          // Asegurar que todos los campos estén presentes
-          return { ...defaultColors, ...parsed }
-        } catch {
+      // Sin token, retornar defaults
+      return defaultColors
+    }
+  }
+
+  if (!userId) {
+    return defaultColors
+  }
+
+  // Verificar caché primero (solo como optimización, SQL es la fuente de verdad)
+  const cached = themeCache[userId]
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.colors
+  }
+
+  // Si ya hay una petición en curso, esperar a que termine
+  if (loadingPromises[userId]) {
+    return loadingPromises[userId]
+  }
+
+  // Crear nueva petición a SQL
+  const loadPromise = (async () => {
+    try {
+      const { getAuthToken, getAuthHeaders } = await import('@/lib/api-helpers')
+      const token = getAuthToken()
+      
+      if (!token) {
+        console.warn('[THEME] No hay token disponible para cargar tema desde SQL')
+        return defaultColors
+      }
+
+      const headers = getAuthHeaders()
+      const response = await fetch(`/api/usuarios/${userId}/tema`, {
+        headers,
+        cache: 'no-store'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.data) {
+          // Merge con defaults para asegurar que todos los campos estén presentes
+          const colors: ThemeColors = {
+            primaryBase: data.data.primaryBase || defaultColors.primaryBase,
+            grayBase: data.data.grayBase || defaultColors.grayBase,
+            secondaryBase: data.data.secondaryBase || defaultColors.secondaryBase,
+            successBase: data.data.successBase || defaultColors.successBase,
+            warningBase: data.data.warningBase || defaultColors.warningBase,
+            dangerBase: data.data.dangerBase || defaultColors.dangerBase,
+            fontFamily: data.data.fontFamily || defaultColors.fontFamily,
+            textPrimary: data.data.textPrimary || defaultColors.textPrimary,
+            textSecondary: data.data.textSecondary || defaultColors.textSecondary,
+            textTertiary: data.data.textTertiary || defaultColors.textTertiary,
+            textOnColor: data.data.textOnColor || defaultColors.textOnColor,
+            textOnColorSecondary: data.data.textOnColorSecondary || defaultColors.textOnColorSecondary
+          }
+          // Guardar en caché (solo como optimización)
+          themeCache[userId] = { colors, timestamp: Date.now() }
+          // NO guardar en localStorage - SQL es la única fuente de verdad
+          return colors
+        } else {
+          // No hay configuración en SQL, usar defaults
+          themeCache[userId] = { colors: defaultColors, timestamp: Date.now() }
           return defaultColors
         }
+      } else {
+        console.error('[THEME] Error HTTP al cargar desde SQL:', response.status)
+        // Si falla SQL, retornar defaults (NO usar localStorage)
+        return defaultColors
       }
+    } catch (error) {
+      console.error('[THEME] Error al cargar tema desde SQL:', error)
+      // Si hay error de conexión, retornar defaults (NO usar localStorage)
       return defaultColors
+    } finally {
+      // Limpiar la promesa de carga
+      delete loadingPromises[userId]
     }
-  }
+  })()
 
-  // Buscar configuración específica del usuario
-  const saved = localStorage.getItem(`theme-colors-${userId}`)
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved)
-      // Asegurar que todos los campos estén presentes (merge con defaults)
-      return { ...defaultColors, ...parsed }
-    } catch {
-      return defaultColors
-    }
-  }
-
-  return defaultColors
+  loadingPromises[userId] = loadPromise
+  return loadPromise
 }
 
-export function saveThemeColors(colors: ThemeColors, userId?: string): void {
+export async function saveThemeColors(colors: ThemeColors, userId?: string): Promise<void> {
   if (typeof window === 'undefined') {
     return
   }
@@ -251,23 +311,59 @@ export function saveThemeColors(colors: ThemeColors, userId?: string): void {
   // Si no hay userId, intentar obtenerlo del token
   if (!userId) {
     try {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+      const { getAuthToken } = await import('@/lib/api-helpers')
+      const token = getAuthToken()
       if (token) {
         const payload = JSON.parse(atob(token.split('.')[1]))
         userId = payload.userId
       }
     } catch {
-      // Si no se puede obtener, guardar como configuración global (retrocompatibilidad)
-      localStorage.setItem('theme-colors', JSON.stringify(colors))
-      applyThemeColors(colors)
+      console.error('[THEME] No se puede obtener userId del token, no se puede guardar')
       return
     }
   }
 
-  // Guardar configuración específica del usuario
-  if (userId) {
-    localStorage.setItem(`theme-colors-${userId}`, JSON.stringify(colors))
-    applyThemeColors(colors)
+  if (!userId) {
+    console.error('[THEME] No hay userId, no se puede guardar en SQL')
+    return
+  }
+
+  try {
+    const { getAuthToken, getAuthHeaders } = await import('@/lib/api-helpers')
+    const token = getAuthToken()
+    
+    if (!token) {
+      console.error('[THEME] No hay token disponible para guardar tema en SQL')
+      return
+    }
+
+    const headers = getAuthHeaders()
+    const response = await fetch(`/api/usuarios/${userId}/tema`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(colors),
+      cache: 'no-store'
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      if (data.success) {
+        // Actualizar caché (solo como optimización)
+        themeCache[userId] = { colors, timestamp: Date.now() }
+        // NO guardar en localStorage - SQL es la única fuente de verdad
+        applyThemeColors(colors)
+        console.log('[THEME] Colores guardados exitosamente en SQL para usuario:', userId)
+        return
+      } else {
+        throw new Error(data.error || 'Error desconocido al guardar')
+      }
+    } else {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || `Error HTTP ${response.status}`)
+    }
+  } catch (error) {
+    console.error('[THEME] Error al guardar tema en SQL:', error)
+    throw error
   }
 }
 
@@ -363,6 +459,7 @@ export function applyThemeColors(colors: ThemeColors): void {
     root.style.setProperty('--color-text-secondary', '#ffffff')
     root.style.setProperty('--color-text-tertiary', '#ffffff')
     root.style.setProperty('--color-text-on-color', '#ffffff')
+    root.style.setProperty('--color-text-on-color-secondary', '#ffffff')
   } else {
     if (colors.textPrimary) {
       root.style.setProperty('--color-text-primary', colors.textPrimary)
@@ -376,28 +473,13 @@ export function applyThemeColors(colors: ThemeColors): void {
     if (colors.textOnColor) {
       root.style.setProperty('--color-text-on-color', colors.textOnColor)
     }
-  }
-}
-
-export function resetThemeColors(userId?: string): void {
-  saveThemeColors(defaultColors, userId)
-}
-
-// Aplicar colores al cargar (solo si hay un usuario)
-if (typeof window !== 'undefined') {
-  // Intentar obtener userId del token
-  try {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
-    if (token) {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      applyThemeColors(getThemeColors(payload.userId))
-    } else {
-      // Si no hay token, usar configuración global o defaults
-      applyThemeColors(getThemeColors())
+    if (colors.textOnColorSecondary) {
+      root.style.setProperty('--color-text-on-color-secondary', colors.textOnColorSecondary)
     }
-  } catch {
-    // Si hay error, usar defaults
-    applyThemeColors(defaultColors)
   }
+}
+
+export async function resetThemeColors(userId?: string): Promise<void> {
+  await saveThemeColors(defaultColors, userId)
 }
 
