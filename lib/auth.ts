@@ -62,10 +62,19 @@ export function verifyToken(token: string): JWTPayload | null {
 }
 
 export async function authenticateUser(email: string, password: string) {
-  await ensurePermissionsCatalog()
+  // Normalizar email (trim y lowercase)
+  const normalizedEmail = email.trim().toLowerCase()
+
+  // Sincronizar catálogo de permisos (no bloquear si falla)
+  try {
+    await ensurePermissionsCatalog()
+  } catch (error) {
+    console.error('[AUTH] Error al sincronizar catálogo de permisos:', error)
+    // Continuar con la autenticación aunque falle la sincronización
+  }
 
   const user = await prisma.usuario.findUnique({
-    where: { email },
+    where: { email: normalizedEmail },
     include: {
       sucursales: {
         include: {
@@ -75,12 +84,19 @@ export async function authenticateUser(email: string, password: string) {
     }
   })
 
-  if (!user || !user.activo) {
+  if (!user) {
+    console.error(`[AUTH] Usuario no encontrado: ${normalizedEmail}`)
+    throw new Error('Credenciales inválidas')
+  }
+
+  if (!user.activo) {
+    console.error(`[AUTH] Usuario inactivo: ${normalizedEmail}`)
     throw new Error('Credenciales inválidas')
   }
 
   const isValidPassword = await verifyPassword(password, user.password)
   if (!isValidPassword) {
+    console.error(`[AUTH] Contraseña inválida para: ${normalizedEmail}`)
     throw new Error('Credenciales inválidas')
   }
 

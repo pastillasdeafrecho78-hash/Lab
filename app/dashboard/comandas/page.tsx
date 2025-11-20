@@ -5,18 +5,18 @@ import { useRouter } from 'next/navigation'
 import { 
   PlusIcon,
   MagnifyingGlassIcon,
-  FunnelIcon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon
+  FunnelIcon
 } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
+import { getAuthToken, getAuthHeaders } from '@/lib/api-helpers'
 
 interface Comanda {
   id: string
   numeroComanda: string
   estado: string
   fechaCreacion: string
+  fechaArchivado?: string
+  archivada?: boolean
   cliente: {
     id: string
     nombre: string
@@ -57,10 +57,21 @@ interface Sucursal {
   nombre: string
 }
 
-interface TipoPrueba {
+interface Analito {
   id: string
   nombre: string
-  elementos: string[]
+  unidad?: string | null
+  descripcion?: string | null
+}
+
+interface CategoriaAnalito {
+  id: string
+  nombre: string
+  descripcion?: string | null
+  analitos: Array<{
+    analito: Analito
+    orden: number
+  }>
 }
 
 interface UsuarioActual {
@@ -105,15 +116,18 @@ const createInitialNewClientState = (): NewClientState => ({
 
 export default function ComandasPage() {
   const [comandas, setComandas] = useState<Comanda[]>([])
+  const [comandasArchivadas, setComandasArchivadas] = useState<Comanda[]>([])
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
-  const [tiposPrueba, setTiposPrueba] = useState<TipoPrueba[]>([])
+  const [categorias, setCategorias] = useState<CategoriaAnalito[]>([])
+  const [analitos, setAnalitos] = useState<Analito[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterEstado, setFilterEstado] = useState('')
   const [filterSucursal, setFilterSucursal] = useState('')
   const [currentUser, setCurrentUser] = useState<UsuarioActual | null>(null)
+  const [categoriaSearchTerm, setCategoriaSearchTerm] = useState('')
   const router = useRouter()
 
   const [formData, setFormData] = useState<FormState>(() => createInitialFormState())
@@ -156,35 +170,30 @@ export default function ComandasPage() {
 
   const loadData = async () => {
     try {
-      const token = localStorage.getItem('token')
+      const token = getAuthToken()
+      
       if (!token) {
         router.push('/')
         return
       }
 
-      const [comandasRes, clientesRes, sucursalesRes, tiposRes, meRes] = await Promise.all([
-        fetch('/api/comandas', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch('/api/clientes', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch('/api/sucursales', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch('/api/tipos-prueba', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch('/api/auth/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
+      const headers = getAuthHeaders()
+
+      const [comandasRes, clientesRes, sucursalesRes, categoriasRes, analitosRes, meRes] = await Promise.all([
+        fetch('/api/comandas', { headers }),
+        fetch('/api/clientes', { headers }),
+        fetch('/api/sucursales', { headers }),
+        fetch('/api/categorias-analito', { headers }),
+        fetch('/api/analitos', { headers }),
+        fetch('/api/auth/me', { headers })
       ])
 
-      const [comandasData, clientesData, sucursalesData, tiposData, meData] = await Promise.all([
+      const [comandasData, clientesData, sucursalesData, categoriasData, analitosData, meData] = await Promise.all([
         comandasRes.json(),
         clientesRes.json(),
         sucursalesRes.json(),
-        tiposRes.json(),
+        categoriasRes.json(),
+        analitosRes.json(),
         meRes.json()
       ])
 
@@ -202,10 +211,16 @@ export default function ComandasPage() {
         permisos: meData.data.permisos || []
       })
 
-      if (comandasData.success) setComandas(comandasData.data)
+      if (comandasData.success) {
+        setComandas(comandasData.data)
+        if (comandasData.archivadas) {
+          setComandasArchivadas(comandasData.archivadas)
+        }
+      }
       if (clientesData.success) setClientes(clientesData.data)
       if (sucursalesData.success) setSucursales(sucursalesData.data)
-      if (tiposData.success) setTiposPrueba(tiposData.data)
+      if (categoriasData.success) setCategorias(categoriasData.data)
+      if (analitosData.success) setAnalitos(analitosData.data)
 
     } catch (error) {
       toast.error('Error al cargar datos')
@@ -227,12 +242,12 @@ export default function ComandasPage() {
 
     try {
       setCreatingClient(true)
-      const token = localStorage.getItem('token')
+      const headers = getAuthHeaders()
       const response = await fetch('/api/clientes', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...headers,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           nombre: newClientData.nombre.trim(),
@@ -274,14 +289,21 @@ export default function ComandasPage() {
     }
 
     try {
-      const token = localStorage.getItem('token')
+      const headers = getAuthHeaders()
+      // Enviar categoriaId en lugar de tipoPruebaId si es una categoría
+      const body = {
+        ...formData,
+        categoriaId: formData.tipoPruebaId, // El ID seleccionado es de categoría
+        tipoPruebaId: undefined // No enviar tipoPruebaId
+      }
+
       const response = await fetch('/api/comandas', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...headers,
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(body)
       })
 
       const data = await response.json()
@@ -298,25 +320,45 @@ export default function ComandasPage() {
     }
   }
 
-  const handleTipoPruebaChange = (tipoId: string) => {
-    const tipo = tiposPrueba.find(t => t.id === tipoId)
-    if (tipo) {
+  const handleCategoriaChange = (categoriaId: string) => {
+    const categoria = categorias.find(c => c.id === categoriaId)
+    if (categoria) {
+      // Obtener los nombres de los analitos de la categoría
+      const elementos = categoria.analitos.map(detalle => detalle.analito.nombre)
       setFormData(prev => ({
         ...prev,
-        tipoPruebaId: tipoId,
-        elementos: tipo.elementos
+        tipoPruebaId: categoriaId,
+        elementos
       }))
     }
   }
 
-  const toggleElemento = (elemento: string) => {
+  const toggleAnalito = (analitoNombre: string) => {
     setFormData(prev => ({
       ...prev,
-      elementos: prev.elementos.includes(elemento)
-        ? prev.elementos.filter(e => e !== elemento)
-        : [...prev.elementos, elemento]
+      elementos: prev.elementos.includes(analitoNombre)
+        ? prev.elementos.filter(e => e !== analitoNombre)
+        : [...prev.elementos, analitoNombre]
     }))
   }
+
+  // Filtrar categorías por búsqueda
+  const filteredCategorias = categorias.filter(categoria => {
+    if (!categoriaSearchTerm) return true
+    const searchLower = categoriaSearchTerm.toLowerCase()
+    return (
+      categoria.nombre.toLowerCase().includes(searchLower) ||
+      categoria.descripcion?.toLowerCase().includes(searchLower) ||
+      categoria.analitos.some(detalle => 
+        detalle.analito.nombre.toLowerCase().includes(searchLower)
+      )
+    )
+  })
+
+  // Obtener analitos de la categoría seleccionada
+  const analitosCategoriaSeleccionada = formData.tipoPruebaId
+    ? categorias.find(c => c.id === formData.tipoPruebaId)?.analitos.map(d => d.analito) || []
+    : []
 
   const getEstadoBadge = (estado: string) => {
     const badges = {
@@ -324,7 +366,6 @@ export default function ComandasPage() {
       EN_PROCESO: 'badge-primary',
       COMPLETADA: 'badge-success',
       ENTREGADA: 'badge-secondary',
-      CANCELADA: 'badge-danger'
     }
     return badges[estado as keyof typeof badges] || 'badge-secondary'
   }
@@ -406,7 +447,6 @@ export default function ComandasPage() {
                 <option value="EN_PROCESO">En Proceso</option>
                 <option value="COMPLETADA">Completada</option>
                 <option value="ENTREGADA">Entregada</option>
-                <option value="CANCELADA">Cancelada</option>
               </select>
 
               <select
@@ -449,14 +489,15 @@ export default function ComandasPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
                     Fecha
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-secondary-200">
                 {filteredComandas.map((comanda) => (
-                  <tr key={comanda.id} className="hover:bg-secondary-50">
+                  <tr 
+                    key={comanda.id} 
+                    className="hover:bg-secondary-50 cursor-pointer transition-colors"
+                    onClick={() => router.push(`/dashboard/comandas/${comanda.id}`)}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-secondary-900">
                         {comanda.numeroComanda}
@@ -490,22 +531,6 @@ export default function ComandasPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
                       {new Date(comanda.fechaCreacion).toLocaleDateString('es-ES')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => router.push(`/dashboard/comandas/${comanda.id}`)}
-                          className="text-primary-600 hover:text-primary-900"
-                        >
-                          <EyeIcon className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => router.push(`/dashboard/comandas/${comanda.id}/editar`)}
-                          className="text-secondary-600 hover:text-secondary-900"
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -687,40 +712,95 @@ export default function ComandasPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-secondary-700 mb-2">
-                    Tipo de Prueba *
+                    Categoría de Prueba *
                   </label>
-                  <select
-                    value={formData.tipoPruebaId}
-                    onChange={(e) => handleTipoPruebaChange(e.target.value)}
-                    className="input"
-                    required
-                  >
-                    <option value="">Seleccionar tipo de prueba</option>
-                    {tiposPrueba.map(tipo => (
-                      <option key={tipo.id} value={tipo.id}>
-                        {tipo.nombre}
-                      </option>
-                    ))}
-                  </select>
+                  
+                  {/* Barra de búsqueda */}
+                  <div className="mb-3">
+                    <div className="relative">
+                      <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400" />
+                      <input
+                        type="text"
+                        placeholder="Buscar categoría o parámetro..."
+                        value={categoriaSearchTerm}
+                        onChange={(e) => setCategoriaSearchTerm(e.target.value)}
+                        className="input pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Lista de categorías filtradas */}
+                  <div className="max-h-64 overflow-y-auto border border-secondary-200 rounded-lg p-2 bg-secondary-50">
+                    {filteredCategorias.length === 0 ? (
+                      <p className="text-sm text-secondary-500 text-center py-4">
+                        {categoriaSearchTerm ? 'No se encontraron categorías' : 'No hay categorías disponibles'}
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {filteredCategorias.map(categoria => (
+                          <label
+                            key={categoria.id}
+                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition ${
+                              formData.tipoPruebaId === categoria.id
+                                ? 'border-primary-500 bg-primary-50'
+                                : 'border-secondary-200 bg-white hover:bg-secondary-50'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="categoria"
+                              value={categoria.id}
+                              checked={formData.tipoPruebaId === categoria.id}
+                              onChange={(e) => handleCategoriaChange(e.target.value)}
+                              className="mt-1 rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-secondary-900">
+                                {categoria.nombre}
+                              </p>
+                              {categoria.descripcion && (
+                                <p className="text-xs text-secondary-500 mt-1">
+                                  {categoria.descripcion}
+                                </p>
+                              )}
+                              <p className="text-xs text-secondary-400 mt-1">
+                                {categoria.analitos.length} {categoria.analitos.length === 1 ? 'parámetro' : 'parámetros'}
+                              </p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {formData.tipoPruebaId && (
+                {formData.tipoPruebaId && analitosCategoriaSeleccionada.length > 0 && (
                   <div>
                     <label className="block text-sm font-medium text-secondary-700 mb-2">
-                      Elementos a Incluir *
+                      Parámetros incluidos ({formData.elementos.length} seleccionados)
                     </label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {tiposPrueba.find(t => t.id === formData.tipoPruebaId)?.elementos.map(elemento => (
-                        <label key={elemento} className="flex items-center">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto border border-secondary-200 rounded-lg p-3 bg-secondary-50">
+                      {analitosCategoriaSeleccionada.map(analito => (
+                        <label
+                          key={analito.id}
+                          className="flex items-center gap-2 p-2 bg-white rounded border border-secondary-200 hover:bg-secondary-50 cursor-pointer"
+                        >
                           <input
                             type="checkbox"
-                            checked={formData.elementos.includes(elemento)}
-                            onChange={() => toggleElemento(elemento)}
+                            checked={formData.elementos.includes(analito.nombre)}
+                            onChange={() => toggleAnalito(analito.nombre)}
                             className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
                           />
-                          <span className="ml-2 text-sm text-secondary-700">
-                            {elemento.replace('_', ' ')}
-                          </span>
+                          <div className="flex-1">
+                            <span className="text-sm text-secondary-700 font-medium">
+                              {analito.nombre}
+                            </span>
+                            {analito.unidad && (
+                              <span className="text-xs text-secondary-500 ml-2">
+                                ({analito.unidad})
+                              </span>
+                            )}
+                          </div>
                         </label>
                       ))}
                     </div>

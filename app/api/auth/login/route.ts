@@ -37,15 +37,22 @@ export async function POST(request: NextRequest) {
     })
 
     // Establecer cookie con el token para el middleware
-    response.cookies.set('token', result.token, {
-      httpOnly: false, // Permitir acceso desde JavaScript también
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 días
-      path: '/', // Asegurar que la cookie esté disponible en toda la aplicación
-      domain: undefined // No especificar dominio para que funcione en localhost
-    })
+    // Intentar configurar la cookie de manera más permisiva para Cursor
+    try {
+      response.cookies.set('token', result.token, {
+        httpOnly: false, // Permitir acceso desde JavaScript también
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7, // 7 días
+        path: '/', // Asegurar que la cookie esté disponible en toda la aplicación
+        domain: undefined // No especificar dominio para que funcione en localhost
+      })
+    } catch (cookieError) {
+      console.warn('[LOGIN] Error al establecer cookie, continuando con token en respuesta:', cookieError)
+    }
 
+    // También incluir el token en la respuesta para que el cliente lo guarde manualmente
+    // Esto es especialmente útil para navegadores integrados como Cursor
     return response
 
   } catch (error: any) {

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
+import { saveAuthToken } from '@/lib/api-helpers'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -11,6 +12,28 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value)
+  }, [])
+
+  const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value)
+  }, [])
+
+  const handleEmailBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
+    // Asegurar que el valor se mantenga al perder el foco
+    if (e.target.value !== email) {
+      setEmail(e.target.value)
+    }
+  }, [email])
+
+  const handlePasswordBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
+    // Asegurar que el valor se mantenga al perder el foco
+    if (e.target.value !== password) {
+      setPassword(e.target.value)
+    }
+  }, [password])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,13 +59,15 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (data.success && data.token) {
-        localStorage.setItem('token', data.token)
+        // Guardar token usando el helper que maneja múltiples almacenamientos
+        saveAuthToken(data.token)
+        
         toast.success('Inicio de sesión exitoso')
         
         // Esperar un momento para que la cookie se establezca completamente
         setTimeout(() => {
           router.push('/dashboard')
-        }, 300)
+        }, 500)
       } else {
         toast.error(data.error || 'Error al iniciar sesión')
         setLoading(false)
@@ -67,17 +92,20 @@ export default function LoginPage() {
             <p className="text-secondary-600 mt-2">Sistema de Gestión de Comandas</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" autoComplete="on">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-secondary-700 mb-2">
                 Correo Electrónico
               </label>
               <input
                 id="email"
+                name="email"
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
+                onBlur={handleEmailBlur}
                 className="input"
                 placeholder="usuario@laboratorio.com"
               />
@@ -90,10 +118,13 @@ export default function LoginPage() {
               <div className="relative">
                 <input
                   id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   required
+                  autoComplete="current-password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={handlePasswordChange}
+                  onBlur={handlePasswordBlur}
                   className="input pr-10"
                   placeholder="••••••••"
                 />
@@ -101,6 +132,7 @@ export default function LoginPage() {
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
                 >
                   {showPassword ? (
                     <EyeSlashIcon className="h-5 w-5 text-secondary-400" />

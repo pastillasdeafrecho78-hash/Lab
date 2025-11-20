@@ -12,6 +12,7 @@ import {
   UserIcon
 } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
+import { getAuthToken, getAuthHeaders, removeAuthToken } from '@/lib/api-helpers'
 
 interface Usuario {
   id: string
@@ -31,16 +32,16 @@ export default function DashboardPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
+    // Usar el helper para obtener el token de múltiples fuentes
+    const token = getAuthToken()
+    
     if (!token) {
       router.push('/')
       return
     }
 
     fetch('/api/auth/me', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      headers: getAuthHeaders()
     })
     .then(res => res.json())
     .then(data => {
@@ -59,7 +60,7 @@ export default function DashboardPage() {
   }, [router])
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
+    removeAuthToken()
     toast.success('Sesión cerrada')
     router.push('/')
   }

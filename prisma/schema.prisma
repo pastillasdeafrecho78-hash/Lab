@@ -21,11 +21,10 @@ enum Rol {
 }
 
 enum EstadoComanda {
-  PENDIENTE
-  EN_PROCESO
-  COMPLETADA
-  ENTREGADA
-  CANCELADA
+  PENDIENTE    // Registrada
+  EN_PROCESO   // En Proceso
+  COMPLETADA   // Finalizada
+  ENTREGADA    // Entregada
 }
 
 enum TipoChat {
@@ -55,6 +54,7 @@ model Usuario {
   sucursales        UsuarioSucursal[]
   comandasCreadas   Comanda[] @relation("ComandaCreadaPor")
   comandasAsignadas Comanda[] @relation("ComandaAsignadaA")
+  comandasModificadas ComandaHistorial[] @relation("ComandaModificadaPor")
   mensajesEnviados  Mensaje[] @relation("MensajeEnviadoPor")
   resultados        Resultado[]
   auditoria         Auditoria[]
@@ -177,10 +177,12 @@ model Comanda {
   elementos       String[]      // Elementos específicos seleccionados
   estado          EstadoComanda @default(PENDIENTE)
   observaciones   String?
+  archivada       Boolean       @default(false)
   fechaCreacion   DateTime      @default(now())
   fechaAsignacion DateTime?
   fechaCompletado DateTime?
   fechaEntrega    DateTime?
+  fechaArchivado  DateTime?
   creadoPorId     String
   asignadoAId     String?
 
@@ -191,8 +193,26 @@ model Comanda {
   creadoPor       Usuario       @relation("ComandaCreadaPor", fields: [creadoPorId], references: [id])
   asignadoA       Usuario?      @relation("ComandaAsignadaA", fields: [asignadoAId], references: [id])
   resultados      Resultado[]
+  historial       ComandaHistorial[]
 
   @@map("comandas")
+}
+
+model ComandaHistorial {
+  id              String   @id @default(cuid())
+  comandaId       String
+  tipoCambio      String   // 'AGREGAR_CATEGORIA', 'QUITAR_CATEGORIA', 'AGREGAR_PARAMETRO', 'QUITAR_PARAMETRO', 'MODIFICAR_ESTADO', etc.
+  campoAnterior   String?  // Valor anterior (JSON si es complejo)
+  campoNuevo      String?  // Valor nuevo (JSON si es complejo)
+  descripcion     String   // Descripción legible del cambio
+  modificadoPorId String
+  fechaModificacion DateTime @default(now())
+
+  // Relaciones
+  comanda         Comanda  @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+  modificadoPor   Usuario  @relation("ComandaModificadaPor", fields: [modificadoPorId], references: [id])
+
+  @@map("comanda_historial")
 }
 
 model Resultado {

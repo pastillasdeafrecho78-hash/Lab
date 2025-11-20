@@ -13,10 +13,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Obtener token de cookie o header
+  // Obtener token de cookie, header o query parameter (para compatibilidad con Cursor)
   const cookieToken = request.cookies.get('token')?.value
   const headerToken = request.headers.get('authorization')?.replace('Bearer ', '')
-  const token = cookieToken || headerToken
+  const queryToken = request.nextUrl.searchParams.get('token')
+  const token = cookieToken || headerToken || queryToken
 
   // Verificar token para rutas protegidas
   if (!token) {
