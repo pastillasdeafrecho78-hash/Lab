@@ -1,0 +1,261 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  nombre    String
+  apellido  String
+  telefono  String?
+  role      UserRole @default(RECEPCION)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sucursalesAsignadas SucursalUser[]
+  comandasResponsable Comanda[] @relation("ComandaResponsable")
+  comandasTecnico     Comanda[] @relation("ComandaTecnico")
+  resultados          Resultado[]
+  mensajes            Mensaje[]
+  auditLogs           AuditLog[]
+
+  @@map("users")
+}
+
+model Sucursal {
+  id           String   @id @default(cuid())
+  nombre       String
+  direccion    String
+  telefono     String
+  email        String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  usuarios     SucursalUser[]
+  maquinaria   Maquinaria[]
+  comandas     Comanda[]
+  salasChat    ChatRoom[]
+  auditLogs    AuditLog[]
+
+  @@map("sucursales")
+}
+
+model SucursalUser {
+  id         String   @id @default(cuid())
+  sucursalId String
+  userId     String
+  createdAt  DateTime @default(now())
+
+  sucursal   Sucursal @relation(fields: [sucursalId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sucursalId, userId])
+  @@map("sucursal_users")
+}
+
+model Maquinaria {
+  id                    String    @id @default(cuid())
+  nombre                String
+  modelo                String
+  marca                 String
+  numeroSerie           String    @unique
+  sucursalId            String
+  tipoPruebas           String[]
+  isActive              Boolean   @default(true)
+  ultimoMantenimiento   DateTime?
+  proximoMantenimiento  DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relations
+  sucursal              Sucursal  @relation(fields: [sucursalId], references: [id], onDelete: Cascade)
+  auditLogs             AuditLog[]
+
+  @@map("maquinaria")
+}
+
+model Cliente {
+  id              String    @id @default(cuid())
+  nombre          String
+  apellido        String
+  email           String    @unique
+  telefono        String
+  fechaNacimiento DateTime
+  genero          Genero
+  direccion       String?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  comandas        Comanda[]
+  auditLogs       AuditLog[]
+
+  @@map("clientes")
+}
+
+model Comanda {
+  id              String        @id @default(cuid())
+  numeroComanda   String        @unique
+  clienteId       String
+  sucursalId      String
+  tipoPrueba      TipoPrueba
+  elementos       String[]
+  estado          EstadoComanda @default(PENDIENTE)
+  fechaCreacion   DateTime      @default(now())
+  fechaAsignacion DateTime?
+  fechaCompletado DateTime?
+  observaciones   String?
+  responsableId   String
+  tecnicoId       String?
+
+  // Relations
+  cliente         Cliente       @relation(fields: [clienteId], references: [id])
+  sucursal        Sucursal      @relation(fields: [sucursalId], references: [id])
+  responsable     User          @relation("ComandaResponsable", fields: [responsableId], references: [id])
+  tecnico         User?         @relation("ComandaTecnico", fields: [tecnicoId], references: [id])
+  resultados      Resultado[]
+  auditLogs       AuditLog[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("comandas")
+}
+
+model Resultado {
+  id            String   @id @default(cuid())
+  comandaId     String
+  elemento      String
+  valor         Float
+  unidad        String
+  rangoNormalMin Float
+  rangoNormalMax Float
+  esNormal      Boolean
+  observaciones String?
+  tecnicoId     String
+  fechaResultado DateTime @default(now())
+
+  // Relations
+  comanda       Comanda  @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+  tecnico       User     @relation(fields: [tecnicoId], references: [id])
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("resultados")
+}
+
+model ChatRoom {
+  id           String    @id @default(cuid())
+  nombre       String
+  tipo         TipoSala
+  sucursalId   String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  sucursal     Sucursal? @relation(fields: [sucursalId], references: [id], onDelete: Cascade)
+  mensajes     Mensaje[]
+
+  @@map("chat_rooms")
+}
+
+model Mensaje {
+  id          String      @id @default(cuid())
+  salaId      String
+  usuarioId   String
+  contenido   String
+  tipo        TipoMensaje @default(TEXTO)
+  archivoUrl  String?
+  isEdited    Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  sala        ChatRoom    @relation(fields: [salaId], references: [id], onDelete: Cascade)
+  usuario     User        @relation(fields: [usuarioId], references: [id])
+
+  @@map("mensajes")
+}
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  usuarioId       String
+  accion          String
+  entidad         String
+  entidadId       String
+  datosAnteriores Json?
+  datosNuevos     Json?
+  ip              String
+  userAgent       String
+  timestamp       DateTime @default(now())
+
+  // Relations
+  usuario         User     @relation(fields: [usuarioId], references: [id])
+  sucursal        Sucursal? @relation(fields: [entidadId], references: [id])
+  maquinaria      Maquinaria? @relation(fields: [entidadId], references: [id])
+  cliente         Cliente? @relation(fields: [entidadId], references: [id])
+  comanda         Comanda? @relation(fields: [entidadId], references: [id])
+
+  @@map("audit_logs")
+}
+
+// Enums
+enum UserRole {
+  SUPER_ADMIN
+  RESPONSABLE_SANITARIO
+  RESPONSABLE_SUCURSAL
+  TECNICO_LABORATORIO
+  RECEPCION
+  CLIENTE
+}
+
+enum Genero {
+  M
+  F
+  O
+}
+
+enum TipoPrueba {
+  QUIMICA_COMPLETA_6
+  QUIMICA_BASICA_3
+  HEMATOLOGIA_COMPLETA
+  PERFIL_PERSONALIZADO
+}
+
+enum EstadoComanda {
+  PENDIENTE
+  ASIGNADA
+  EN_PROCESO
+  COMPLETADA
+  ENTREGADA
+  CANCELADA
+}
+
+enum TipoSala {
+  GENERAL
+  SUCURSAL
+  PRIVADA
+}
+
+enum TipoMensaje {
+  TEXTO
+  IMAGEN
+  ARCHIVO
+  SISTEMA
+}

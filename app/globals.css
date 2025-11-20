@@ -1,0 +1,392 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+  --font-family: Inter, system-ui, sans-serif;
+  
+  /* Variables de color personalizables - Se generan automáticamente desde colores base */
+  --color-primary-50: 239, 246, 255;
+  --color-primary-100: 219, 234, 254;
+  --color-primary-200: 191, 219, 254;
+  --color-primary-300: 147, 197, 253;
+  --color-primary-400: 96, 165, 250;
+  --color-primary-500: 59, 130, 246;
+  --color-primary-600: 37, 99, 235;
+  --color-primary-700: 29, 78, 216;
+  --color-primary-800: 30, 64, 175;
+  --color-primary-900: 30, 58, 138;
+  
+  /* Escalas de grises personalizables */
+  --color-gray-50: 248, 250, 252;
+  --color-gray-100: 241, 245, 249;
+  --color-gray-200: 226, 232, 240;
+  --color-gray-300: 203, 213, 225;
+  --color-gray-400: 148, 163, 184;
+  --color-gray-500: 100, 116, 139;
+  --color-gray-600: 71, 85, 105;
+  --color-gray-700: 51, 65, 85;
+  --color-gray-800: 30, 41, 59;
+  --color-gray-900: 15, 23, 42;
+  
+  /* Colores secundarios */
+  --color-secondary-50: 248, 250, 252;
+  --color-secondary-100: 241, 245, 249;
+  --color-secondary-200: 226, 232, 240;
+  --color-secondary-300: 203, 213, 225;
+  --color-secondary-400: 148, 163, 184;
+  --color-secondary-500: 100, 116, 139;
+  --color-secondary-600: 71, 85, 105;
+  --color-secondary-700: 51, 65, 85;
+  --color-secondary-800: 30, 41, 59;
+  --color-secondary-900: 15, 23, 42;
+  
+  /* Colores de éxito */
+  --color-success-50: 240, 253, 244;
+  --color-success-100: 220, 252, 231;
+  --color-success-200: 187, 247, 208;
+  --color-success-300: 134, 239, 172;
+  --color-success-400: 74, 222, 128;
+  --color-success-500: 34, 197, 94;
+  --color-success-600: 22, 163, 74;
+  --color-success-700: 21, 128, 61;
+  --color-success-800: 22, 101, 52;
+  --color-success-900: 20, 83, 45;
+  
+  /* Colores de advertencia */
+  --color-warning-50: 255, 251, 235;
+  --color-warning-100: 254, 243, 199;
+  --color-warning-200: 253, 230, 138;
+  --color-warning-300: 252, 211, 77;
+  --color-warning-400: 251, 191, 36;
+  --color-warning-500: 245, 158, 11;
+  --color-warning-600: 217, 119, 6;
+  --color-warning-700: 180, 83, 9;
+  --color-warning-800: 146, 64, 14;
+  --color-warning-900: 120, 53, 15;
+  
+  /* Colores de peligro */
+  --color-danger-50: 254, 242, 242;
+  --color-danger-100: 254, 226, 226;
+  --color-danger-200: 254, 202, 202;
+  --color-danger-300: 252, 165, 165;
+  --color-danger-400: 248, 113, 113;
+  --color-danger-500: 239, 68, 68;
+  --color-danger-600: 220, 38, 38;
+  --color-danger-700: 185, 28, 28;
+  --color-danger-800: 153, 27, 27;
+  --color-danger-900: 127, 29, 29;
+  
+  /* Blancos personalizables */
+  --color-white: 255, 255, 255;
+  --color-black: 0, 0, 0;
+  
+  /* Colores de texto personalizables */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #64748b;
+  --color-text-on-color: #ffffff;
+  --color-text-on-color-secondary: #ffffff;
+}
+
+/* Clases de texto personalizables */
+.text-primary {
+  color: var(--color-text-primary) !important;
+}
+
+.text-secondary {
+  color: var(--color-text-secondary) !important;
+}
+
+.text-tertiary {
+  color: var(--color-text-tertiary) !important;
+}
+
+.text-on-color {
+  color: var(--color-text-on-color) !important;
+}
+
+.text-on-color-secondary {
+  color: var(--color-text-on-color-secondary) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: var(--font-family, 'Inter', system-ui, sans-serif);
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+/* Forzar textos blancos en modo oscuro cuando grayBase es muy oscuro */
+[data-dark-mode="true"] {
+  --color-text-primary: #ffffff !important;
+  --color-text-secondary: #ffffff !important;
+  --color-text-tertiary: #ffffff !important;
+  --color-text-on-color: #ffffff !important;
+  --color-text-on-color-secondary: #ffffff !important;
+}
+
+/* Forzar clases de texto a blanco en modo oscuro */
+[data-dark-mode="true"] .text-primary,
+[data-dark-mode="true"] .text-secondary,
+[data-dark-mode="true"] .text-tertiary,
+[data-dark-mode="true"] .text-on-color,
+[data-dark-mode="true"] .text-on-color-secondary {
+  color: #ffffff !important;
+}
+
+[data-dark-mode="true"] .text-gray-900,
+[data-dark-mode="true"] .text-gray-800,
+[data-dark-mode="true"] .text-gray-700,
+[data-dark-mode="true"] .text-gray-600,
+[data-dark-mode="true"] .text-gray-500,
+[data-dark-mode="true"] .text-gray-400,
+[data-dark-mode="true"] .text-gray-300,
+[data-dark-mode="true"] .text-gray-200,
+[data-dark-mode="true"] .text-gray-100,
+[data-dark-mode="true"] .text-gray-50 {
+  color: #ffffff !important;
+}
+
+/* Componentes personalizados */
+.btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+  background-color: rgb(var(--color-primary-600));
+  color: var(--color-text-on-color);
+}
+
+.btn-primary:hover {
+  background-color: rgb(var(--color-primary-700));
+}
+
+.btn-primary:focus {
+  --tw-ring-color: rgb(var(--color-primary-500));
+}
+
+.btn-secondary {
+  background-color: rgb(var(--color-secondary-600));
+  color: var(--color-text-on-color-secondary);
+}
+
+.btn-secondary:hover {
+  background-color: rgb(var(--color-secondary-400));
+}
+
+.btn-secondary:focus {
+  --tw-ring-color: rgb(var(--color-secondary-500));
+}
+
+.btn-success {
+  background-color: rgb(var(--color-success-600));
+  color: var(--color-text-on-color);
+}
+
+.btn-success:hover {
+  background-color: rgb(var(--color-success-700));
+}
+
+.btn-success:focus {
+  --tw-ring-color: rgb(var(--color-success-500));
+}
+
+.btn-warning {
+  background-color: rgb(var(--color-warning-600));
+  color: var(--color-text-on-color);
+}
+
+.btn-warning:hover {
+  background-color: rgb(var(--color-warning-700));
+}
+
+.btn-warning:focus {
+  --tw-ring-color: rgb(var(--color-warning-500));
+}
+
+.btn-danger {
+  background-color: rgb(var(--color-danger-600));
+  color: var(--color-text-on-color);
+}
+
+.btn-danger:hover {
+  background-color: rgb(var(--color-danger-700));
+}
+
+.btn-danger:focus {
+  --tw-ring-color: rgb(var(--color-danger-500));
+}
+
+.btn-sm {
+  @apply px-3 py-1.5 text-sm;
+}
+
+.btn-lg {
+  @apply px-6 py-3 text-lg;
+}
+
+.input {
+  @apply w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent;
+  border: 1px solid rgb(var(--color-gray-300));
+}
+
+.input:focus {
+  --tw-ring-color: rgb(var(--color-primary-500));
+}
+
+.input-error {
+  @apply border-danger-500 focus:ring-danger-500;
+}
+
+.card {
+  @apply rounded-lg shadow-sm p-6;
+  background-color: rgb(var(--color-gray-200));
+  border: 1px solid rgb(var(--color-gray-300));
+}
+
+.card-static {
+  @apply rounded-lg shadow-sm p-6;
+  background-color: rgb(var(--color-gray-50));
+  border: 1px solid rgb(var(--color-gray-200));
+}
+
+.card-header {
+  @apply border-b border-gray-200 pb-4 mb-4;
+}
+
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-primary {
+  background-color: rgb(var(--color-primary-100));
+  color: rgb(var(--color-primary-800));
+}
+
+.badge-success {
+  background-color: rgb(var(--color-success-100));
+  color: rgb(var(--color-success-800));
+}
+
+.badge-warning {
+  background-color: rgb(var(--color-warning-100));
+  color: rgb(var(--color-warning-800));
+}
+
+.badge-danger {
+  background-color: rgb(var(--color-danger-100));
+  color: rgb(var(--color-danger-800));
+}
+
+.badge-secondary {
+  background-color: rgb(var(--color-secondary-100));
+  color: rgb(var(--color-secondary-800));
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Estados de carga */
+.loading {
+  @apply animate-pulse;
+}
+
+.skeleton {
+  @apply bg-secondary-200 rounded;
+}
+
+/* Chat styles */
+.chat-message {
+  @apply p-3 rounded-lg max-w-xs lg:max-w-md;
+}
+
+.chat-message-sent {
+  @apply bg-primary-600 text-white ml-auto;
+}
+
+.chat-message-received {
+  @apply bg-secondary-100 text-secondary-900 mr-auto;
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .mobile-hidden {
+    display: none;
+  }
+}
+
+@media (min-width: 641px) {
+  .desktop-hidden {
+    display: none;
+  }
+}

@@ -1,0 +1,477 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Rol {
+  SUPER_ADMIN
+  RESPONSABLE_SANITARIO
+  RESPONSABLE_SUCURSAL
+  TECNICO_LABORATORIO
+  RECEPCION
+  CLIENTE
+}
+
+enum EstadoComanda {
+  PENDIENTE // Registrada
+  EN_PROCESO // En Proceso
+  COMPLETADA // Finalizada
+  ENTREGADA // Entregada
+}
+
+enum TipoChat {
+  SUCURSAL
+  GENERAL
+  PRIVADO
+}
+
+enum TipoCanal {
+  TEXTO
+  VOZ
+}
+
+enum CategoriaCanal {
+  GENERAL
+  SUCURSAL
+  EQUIPO
+}
+
+// Modelos principales
+model Usuario {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  nombre            String
+  apellido          String
+  telefono          String?
+  password          String
+  rol               Rol
+  activo            Boolean   @default(true)
+  ultimoAcceso      DateTime?
+  ipUltimoAcceso    String?
+  dispositivoId     String?
+  paquetePermisosId String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relaciones
+  sucursales             UsuarioSucursal[]
+  comandasCreadas        Comanda[]          @relation("ComandaCreadaPor")
+  comandasAsignadas      Comanda[]          @relation("ComandaAsignadaA")
+  comandasModificadas    ComandaHistorial[] @relation("ComandaModificadaPor")
+  mensajesEnviados       Mensaje[]          @relation("MensajeEnviadoPor")
+  canalesCreados         Canal[]            @relation("CanalCreadoPor")
+  resultados             Resultado[]
+  auditoria              Auditoria[]
+  paquetePermisos        PaquetePermisos?   @relation(fields: [paquetePermisosId], references: [id])
+  permisosPersonalizados UsuarioPermiso[]
+  reacciones             ReaccionMensaje[]
+
+  @@map("usuarios")
+}
+
+model Sucursal {
+  id        String   @id @default(cuid())
+  nombre    String
+  direccion String
+  telefono  String
+  email     String?
+  activa    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  usuarios   UsuarioSucursal[]
+  maquinaria Maquinaria[]
+  comandas   Comanda[]
+  mensajes   Mensaje[]         @relation("MensajeSucursal")
+  canales    Canal[]
+
+  @@map("sucursales")
+}
+
+model UsuarioSucursal {
+  id         String   @id @default(cuid())
+  usuarioId  String
+  sucursalId String
+  activo     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  // Relaciones
+  usuario  Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  sucursal Sucursal @relation(fields: [sucursalId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, sucursalId])
+  @@map("usuario_sucursales")
+}
+
+model Maquinaria {
+  id         String   @id @default(cuid())
+  nombre     String
+  modelo     String?
+  marca      String?
+  serie      String?
+  activa     Boolean  @default(true)
+  sucursalId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relaciones
+  sucursal Sucursal           @relation(fields: [sucursalId], references: [id], onDelete: Cascade)
+  pruebas  PruebaMaquinaria[]
+  canales  Canal[]
+
+  @@map("maquinaria")
+}
+
+model TipoPrueba {
+  id          String   @id @default(cuid())
+  nombre      String
+  descripcion String?
+  elementos   String[] // Array de elementos que incluye esta prueba
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relaciones
+  comandas          Comanda[]
+  maquinaria        PruebaMaquinaria[]
+  categorias        TipoPruebaCategoria[]
+  analitosAsignados TipoPruebaAnalito[]
+
+  @@map("tipos_prueba")
+}
+
+model PruebaMaquinaria {
+  id           String   @id @default(cuid())
+  tipoPruebaId String
+  maquinariaId String
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  // Relaciones
+  tipoPrueba TipoPrueba @relation(fields: [tipoPruebaId], references: [id], onDelete: Cascade)
+  maquinaria Maquinaria @relation(fields: [maquinariaId], references: [id], onDelete: Cascade)
+
+  @@unique([tipoPruebaId, maquinariaId])
+  @@map("prueba_maquinaria")
+}
+
+model Cliente {
+  id              String    @id @default(cuid())
+  nombre          String
+  apellido        String
+  email           String    @unique
+  telefono        String?
+  fechaNacimiento DateTime?
+  genero          String?
+  direccion       String?
+  activo          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relaciones
+  comandas Comanda[]
+
+  @@map("clientes")
+}
+
+model Comanda {
+  id              String        @id @default(cuid())
+  numeroComanda   String        @unique
+  clienteId       String
+  sucursalId      String
+  tipoPruebaId    String
+  elementos       String[] // Elementos específicos seleccionados
+  estado          EstadoComanda @default(PENDIENTE)
+  observaciones   String?
+  archivada       Boolean       @default(false)
+  fechaCreacion   DateTime      @default(now())
+  fechaAsignacion DateTime?
+  fechaCompletado DateTime?
+  fechaEntrega    DateTime?
+  fechaArchivado  DateTime?
+  creadoPorId     String
+  asignadoAId     String?
+
+  // Relaciones
+  cliente    Cliente            @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  sucursal   Sucursal           @relation(fields: [sucursalId], references: [id], onDelete: Cascade)
+  tipoPrueba TipoPrueba         @relation(fields: [tipoPruebaId], references: [id])
+  creadoPor  Usuario            @relation("ComandaCreadaPor", fields: [creadoPorId], references: [id])
+  asignadoA  Usuario?           @relation("ComandaAsignadaA", fields: [asignadoAId], references: [id])
+  resultados Resultado[]
+  historial  ComandaHistorial[]
+
+  @@map("comandas")
+}
+
+model ComandaHistorial {
+  id                String   @id @default(cuid())
+  comandaId         String
+  tipoCambio        String // 'AGREGAR_CATEGORIA', 'QUITAR_CATEGORIA', 'AGREGAR_PARAMETRO', 'QUITAR_PARAMETRO', 'MODIFICAR_ESTADO', etc.
+  campoAnterior     String? // Valor anterior (JSON si es complejo)
+  campoNuevo        String? // Valor nuevo (JSON si es complejo)
+  descripcion       String // Descripción legible del cambio
+  modificadoPorId   String
+  fechaModificacion DateTime @default(now())
+
+  // Relaciones
+  comanda       Comanda @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+  modificadoPor Usuario @relation("ComandaModificadaPor", fields: [modificadoPorId], references: [id])
+
+  @@map("comanda_historial")
+}
+
+model Resultado {
+  id              String   @id @default(cuid())
+  comandaId       String
+  elemento        String
+  valor           Float
+  unidad          String
+  rangoNormal     String
+  observaciones   String?
+  fechaRegistro   DateTime @default(now())
+  registradoPorId String
+
+  // Relaciones
+  comanda       Comanda @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+  registradoPor Usuario @relation(fields: [registradoPorId], references: [id])
+
+  @@map("resultados")
+}
+
+model Mensaje {
+  id               String    @id @default(cuid())
+  contenido        String
+  canalId          String // Nuevo: ID del canal
+  tipo             TipoChat  @default(GENERAL) // Mantener para compatibilidad temporal
+  sucursalId       String? // Mantener para compatibilidad temporal
+  remitenteId      String
+  destinatarioId   String? // Mantener para compatibilidad temporal
+  archivoUrl       String? // URL del archivo adjunto
+  tipoArchivo      String? // 'imagen', 'documento', 'pdf', etc.
+  nombreArchivo    String? // Nombre original del archivo
+  editado          Boolean   @default(false)
+  fechaEdicion     DateTime?
+  eliminado        Boolean   @default(false)
+  fechaEliminacion DateTime?
+  leido            Boolean   @default(false)
+  fechaEnvio       DateTime  @default(now())
+
+  // Relaciones
+  canal      Canal             @relation(fields: [canalId], references: [id], onDelete: Cascade)
+  sucursal   Sucursal?         @relation("MensajeSucursal", fields: [sucursalId], references: [id], onDelete: Cascade)
+  remitente  Usuario           @relation("MensajeEnviadoPor", fields: [remitenteId], references: [id])
+  reacciones ReaccionMensaje[]
+
+  @@map("mensajes")
+}
+
+model Canal {
+  id                 String         @id @default(cuid())
+  nombre             String
+  descripcion        String?
+  categoria          CategoriaCanal
+  tipo               TipoCanal      @default(TEXTO)
+  orden              Int            @default(0)
+  activo             Boolean        @default(true)
+  creadoPorId        String
+  sucursalId         String? // Si es categoría Sucursal
+  equipoId           String? // Si es categoría Equipo
+  fechaCreacion      DateTime       @default(now())
+  fechaActualizacion DateTime       @updatedAt
+
+  // Relaciones
+  creadoPor Usuario        @relation("CanalCreadoPor", fields: [creadoPorId], references: [id])
+  sucursal  Sucursal?      @relation(fields: [sucursalId], references: [id], onDelete: Cascade)
+  equipo    Maquinaria?    @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  mensajes  Mensaje[]
+  permisos  CanalPermiso[]
+
+  @@map("canales")
+}
+
+model CanalPermiso {
+  id               String   @id @default(cuid())
+  canalId          String
+  rol              Rol
+  puedeVer         Boolean  @default(true)
+  puedeEscribir    Boolean  @default(true)
+  puedeAdministrar Boolean  @default(false)
+  fechaCreacion    DateTime @default(now())
+
+  // Relaciones
+  canal Canal @relation(fields: [canalId], references: [id], onDelete: Cascade)
+
+  @@unique([canalId, rol])
+  @@map("canal_permisos")
+}
+
+model ReaccionMensaje {
+  id            String   @id @default(cuid())
+  mensajeId     String
+  usuarioId     String
+  emoji         String // "👍", "❤️", etc.
+  fechaReaccion DateTime @default(now())
+
+  // Relaciones
+  mensaje Mensaje @relation(fields: [mensajeId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([mensajeId, usuarioId, emoji])
+  @@map("reacciones_mensaje")
+}
+
+model Auditoria {
+  id              String   @id @default(cuid())
+  usuarioId       String
+  accion          String
+  tabla           String
+  registroId      String?
+  datosAnteriores Json?
+  datosNuevos     Json?
+  ip              String?
+  userAgent       String?
+  dispositivo     String?
+  fecha           DateTime @default(now())
+
+  // Relaciones
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@map("auditoria")
+}
+
+model Permiso {
+  id          String   @id @default(cuid())
+  clave       String   @unique
+  nombre      String
+  descripcion String?
+  categoria   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  paquetes PaquetePermisoDetalle[]
+  usuarios UsuarioPermiso[]
+
+  @@map("permisos")
+}
+
+model PaquetePermisos {
+  id              String   @id @default(cuid())
+  nombre          String
+  descripcion     String?
+  rolBase         Rol
+  esPersonalizado Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  permisos PaquetePermisoDetalle[]
+  usuarios Usuario[]
+
+  @@unique([nombre])
+  @@map("paquetes_permisos")
+}
+
+model PaquetePermisoDetalle {
+  id        String   @id @default(cuid())
+  paqueteId String
+  permisoId String
+  permitido Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  paquete PaquetePermisos @relation(fields: [paqueteId], references: [id], onDelete: Cascade)
+  permiso Permiso         @relation(fields: [permisoId], references: [id], onDelete: Cascade)
+
+  @@unique([paqueteId, permisoId])
+  @@map("paquetes_permisos_detalle")
+}
+
+model UsuarioPermiso {
+  id        String   @id @default(cuid())
+  usuarioId String
+  permisoId String
+  permitido Boolean
+  createdAt DateTime @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  permiso Permiso @relation(fields: [permisoId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, permisoId])
+  @@map("usuario_permisos")
+}
+
+model Analito {
+  id          String   @id @default(cuid())
+  nombre      String   @unique
+  descripcion String?
+  unidad      String?
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  categorias  CategoriaAnalitoDetalle[]
+  tipoPruebas TipoPruebaAnalito[]
+
+  @@map("analitos")
+}
+
+model CategoriaAnalito {
+  id          String   @id @default(cuid())
+  nombre      String   @unique
+  descripcion String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  analitos    CategoriaAnalitoDetalle[]
+  tipoPruebas TipoPruebaCategoria[]
+
+  @@map("categorias_analito")
+}
+
+model CategoriaAnalitoDetalle {
+  id          String   @id @default(cuid())
+  categoriaId String
+  analitoId   String
+  orden       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  categoria CategoriaAnalito @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  analito   Analito          @relation(fields: [analitoId], references: [id], onDelete: Cascade)
+
+  @@unique([categoriaId, analitoId])
+  @@map("categoria_analito_detalle")
+}
+
+model TipoPruebaAnalito {
+  id           String   @id @default(cuid())
+  tipoPruebaId String
+  analitoId    String
+  createdAt    DateTime @default(now())
+
+  tipoPrueba TipoPrueba @relation(fields: [tipoPruebaId], references: [id], onDelete: Cascade)
+  analito    Analito    @relation(fields: [analitoId], references: [id], onDelete: Cascade)
+
+  @@unique([tipoPruebaId, analitoId])
+  @@map("tipo_prueba_analitos")
+}
+
+model TipoPruebaCategoria {
+  id           String   @id @default(cuid())
+  tipoPruebaId String
+  categoriaId  String
+  createdAt    DateTime @default(now())
+
+  tipoPrueba TipoPrueba       @relation(fields: [tipoPruebaId], references: [id], onDelete: Cascade)
+  categoria  CategoriaAnalito @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+
+  @@unique([tipoPruebaId, categoriaId])
+  @@map("tipo_prueba_categorias")
+}
