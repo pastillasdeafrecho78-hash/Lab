@@ -2,8 +2,9 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
+import ThemeProvider from '@/components/ThemeProvider'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
   title: 'Laboratorio Comandas - Sistema de Gestión',
@@ -17,9 +18,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es">
-      <body className={inter.className}>
-        {children}
+      <html lang="es">
+        <body className={`${inter.variable} font-sans`} style={{ fontFamily: 'var(--font-family, \'Inter\', system-ui, sans-serif)' }}>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
         <Toaster
           position="top-right"
           toastOptions={{

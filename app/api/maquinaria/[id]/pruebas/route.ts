@@ -96,8 +96,7 @@ export async function POST(
         tipoPrueba: {
           select: {
             id: true,
-            nombre: true,
-            elementos: true
+            nombre: true
           }
         },
         maquinaria: {

@@ -58,8 +58,7 @@ export async function GET(request: NextRequest) {
             tipoPrueba: {
               select: {
                 id: true,
-                nombre: true,
-                elementos: true
+                nombre: true
               }
             }
           }

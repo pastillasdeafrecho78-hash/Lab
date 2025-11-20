@@ -12,7 +12,8 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "seed:catalogo": "node scripts/seed-catalogo.js"
+    "seed:catalogo": "node scripts/seed-catalogo.js",
+    "init:canal-general": "node scripts/init-canal-general.js"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
@@ -36,8 +37,6 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.47.0",
     "react-hot-toast": "^2.4.1",
-    "socket.io": "^4.7.4",
-    "socket.io-client": "^4.7.4",
     "tailwindcss": "^3.3.6",
     "zod": "^3.22.4"
   },

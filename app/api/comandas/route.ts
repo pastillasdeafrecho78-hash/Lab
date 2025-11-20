@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
       where.estado = estado
       whereArchivadas.estado = estado
     }
-    
+
     // Filtrar por sucursales del usuario si no es super admin
     if (user.rol !== 'SUPER_ADMIN') {
       const sucursalesIds = user.sucursales.map(s => s.id)

@@ -5,62 +5,72 @@ import { DEFAULT_PERMISSION_PACKAGES, PERMISSIONS_DEFINITIONS } from './permissi
 let catalogoSincronizado = false
 
 export async function syncPermissionsCatalog() {
-  for (const permiso of PERMISSIONS_DEFINITIONS) {
-    await prisma.permiso.upsert({
-      where: { clave: permiso.clave },
-      update: {
-        nombre: permiso.nombre,
-        descripcion: permiso.descripcion,
-        categoria: permiso.categoria
-      },
-      create: {
-        clave: permiso.clave,
-        nombre: permiso.nombre,
-        descripcion: permiso.descripcion,
-        categoria: permiso.categoria
-      }
-    })
-  }
-
-  for (const paquete of DEFAULT_PERMISSION_PACKAGES) {
-    const paqueteDb = await prisma.paquetePermisos.upsert({
-      where: {
-        nombre: paquete.nombre
-      },
-      update: {
-        descripcion: paquete.descripcion,
-        rolBase: paquete.rolBase
-      },
-      create: {
-        nombre: paquete.nombre,
-        descripcion: paquete.descripcion,
-        rolBase: paquete.rolBase,
-        esPersonalizado: false
-      }
-    })
-
-    const permisosDb = await prisma.permiso.findMany({
-      where: {
-        clave: {
-          in: Object.keys(paquete.permisos)
+  try {
+    for (const permiso of PERMISSIONS_DEFINITIONS) {
+      await prisma.permiso.upsert({
+        where: { clave: permiso.clave },
+        update: {
+          nombre: permiso.nombre,
+          descripcion: permiso.descripcion,
+          categoria: permiso.categoria
+        },
+        create: {
+          clave: permiso.clave,
+          nombre: permiso.nombre,
+          descripcion: permiso.descripcion,
+          categoria: permiso.categoria
         }
-      }
-    })
+      })
+    }
 
-    // Limpiar relaciones existentes para sincronizar definiciones por defecto
-    await prisma.paquetePermisoDetalle.deleteMany({
-      where: {
-        paqueteId: paqueteDb.id
-      }
-    })
+    for (const paquete of DEFAULT_PERMISSION_PACKAGES) {
+      const paqueteDb = await prisma.paquetePermisos.upsert({
+        where: {
+          nombre: paquete.nombre
+        },
+        update: {
+          descripcion: paquete.descripcion,
+          rolBase: paquete.rolBase
+        },
+        create: {
+          nombre: paquete.nombre,
+          descripcion: paquete.descripcion,
+          rolBase: paquete.rolBase,
+          esPersonalizado: false
+        }
+      })
 
-    await prisma.paquetePermisoDetalle.createMany({
-      data: permisosDb.map(permiso => ({
-        paqueteId: paqueteDb.id,
-        permisoId: permiso.id,
-        permitido: paquete.permisos[permiso.clave] ?? false
-      }))
-    })
+      const permisosDb = await prisma.permiso.findMany({
+        where: {
+          clave: {
+            in: Object.keys(paquete.permisos)
+          }
+        }
+      })
+
+      // Limpiar relaciones existentes para sincronizar definiciones por defecto
+      await prisma.paquetePermisoDetalle.deleteMany({
+        where: {
+          paqueteId: paqueteDb.id
+        }
+      })
+
+      if (permisosDb.length > 0) {
+        // Usar skipDuplicates para evitar errores si hay registros duplicados
+        // (puede ocurrir en condiciones de carrera)
+        await prisma.paquetePermisoDetalle.createMany({
+          data: permisosDb.map(permiso => ({
+            paqueteId: paqueteDb.id,
+            permisoId: permiso.id,
+            permitido: paquete.permisos[permiso.clave] ?? false
+          })),
+          skipDuplicates: true
+        })
+      }
+    }
+  } catch (error) {
+    console.error('Error en syncPermissionsCatalog:', error)
+    throw error
   }
 }
 
@@ -148,7 +158,7 @@ export async function getEffectivePermissionsForUser(userId: string) {
   }
 
   return Array.from(permisos.entries())
-    .filter(([, permitido]) => permitido)
+    .filter(([_, permitido]) => permitido)
     .map(([clave]) => clave)
 }
 
@@ -169,7 +179,13 @@ export async function ensurePermissionsCatalog() {
     return
   }
 
-  await syncPermissionsCatalog()
-  catalogoSincronizado = true
+  try {
+    await syncPermissionsCatalog()
+    catalogoSincronizado = true
+  } catch (error) {
+    console.error('[PERMISSIONS] Error al sincronizar catálogo:', error)
+    // No lanzar el error, permitir que la aplicación continúe
+    // El catálogo se intentará sincronizar en la próxima llamada
+    catalogoSincronizado = false
+  }
 }
-

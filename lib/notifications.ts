@@ -1,15 +1,6 @@
-import { Server as ServerIO } from 'socket.io'
 import { sendComandaCompletadaEmail, sendComandaCreadaEmail } from './email'
 
-let ioInstance: ServerIO | null = null
-
-export function setIOInstance(io: ServerIO) {
-  ioInstance = io
-}
-
-export function getIOInstance(): ServerIO | null {
-  return ioInstance
-}
+// Socket.IO removido - usando Firebase para chat en su lugar
 
 export interface NotificationData {
   type: 'comanda_creada' | 'comanda_actualizada' | 'resultado_completado' | 'comanda_completada'
@@ -23,46 +14,11 @@ export interface NotificationData {
 
 /**
  * Emite una notificación a los usuarios relevantes
+ * Nota: Socket.IO removido - las notificaciones ahora se manejan vía Firebase o API
  */
 export async function emitNotification(notification: NotificationData) {
-  if (!ioInstance) {
-    console.warn('Socket.io instance no está disponible')
-    return
-  }
-
-  try {
-    // Notificar a todos los usuarios de la sucursal
-    if (notification.sucursalId) {
-      ioInstance.to(`sucursal_${notification.sucursalId}`).emit('notification', notification)
-    }
-
-    // Notificar a un usuario específico
-    if (notification.userId) {
-      ioInstance.to(`user_${notification.userId}`).emit('notification', notification)
-    }
-
-    // Notificar a todos los usuarios (para eventos importantes)
-    if (notification.type === 'comanda_completada' || notification.type === 'resultado_completado') {
-      ioInstance.to('general').emit('notification', notification)
-    }
-
-    // Emitir evento específico de comanda
-    if (notification.comandaId) {
-      if (notification.type === 'comanda_creada') {
-        ioInstance.emit('comanda_created', {
-          comandaId: notification.comandaId,
-          ...notification
-        })
-      } else if (notification.type === 'comanda_actualizada' || notification.type === 'comanda_completada') {
-        ioInstance.emit('comanda_updated', {
-          comandaId: notification.comandaId,
-          ...notification
-        })
-      }
-    }
-  } catch (error) {
-    console.error('Error al emitir notificación:', error)
-  }
+  // Socket.IO removido - implementar con Firebase o sistema de notificaciones alternativo si es necesario
+  console.log('Notificación:', notification)
 }
 
 /**

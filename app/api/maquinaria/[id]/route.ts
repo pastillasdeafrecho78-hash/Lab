@@ -43,7 +43,6 @@ export async function GET(
               select: {
                 id: true,
                 nombre: true,
-                elementos: true,
                 analitosAsignados: {
                   include: {
                     analito: {
