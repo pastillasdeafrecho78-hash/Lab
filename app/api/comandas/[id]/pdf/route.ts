@@ -65,7 +65,7 @@ export async function GET(
     }
 
     // Verificar acceso a la sucursal
-    if (user.rol !== 'SUPER_ADMIN' && !user.sucursales.some(s => s.id === comanda.sucursalId)) {
+    if (user.rol !== 'SUPER_ADMIN' && user.sucursales && Array.isArray(user.sucursales) && !user.sucursales.some(s => s.id === comanda.sucursalId)) {
       return NextResponse.json(
         { success: false, error: 'Sin acceso a esta comanda' },
         { status: 403 }
@@ -113,9 +113,24 @@ export async function GET(
         )
       }
 
+      // Validar que los resultados tengan el formato correcto
+      const resultadosFormateados = comanda.resultados.map(r => ({
+        id: r.id,
+        elemento: r.elemento,
+        valor: Number(r.valor),
+        unidad: r.unidad || '',
+        rangoNormal: r.rangoNormal || '',
+        observaciones: r.observaciones || '',
+        fechaRegistro: r.fechaRegistro
+      }))
+
       pdfBuffer = await generateResultadosPDF({
-        comanda,
-        resultados: comanda.resultados,
+        comanda: {
+          ...comanda,
+          fechaCreacion: comanda.fechaCreacion instanceof Date ? comanda.fechaCreacion : new Date(comanda.fechaCreacion),
+          fechaCompletado: comanda.fechaCompletado ? (comanda.fechaCompletado instanceof Date ? comanda.fechaCompletado : new Date(comanda.fechaCompletado)) : null
+        },
+        resultados: resultadosFormateados,
         laboratorioInfo
       })
     } else {
@@ -139,8 +154,14 @@ export async function GET(
 
   } catch (error: any) {
     console.error('Error al generar PDF:', error)
+    console.error('Stack trace:', error.stack)
     return NextResponse.json(
-      { success: false, error: 'Error interno del servidor' },
+      { 
+        success: false, 
+        error: 'Error interno del servidor',
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     )
   }

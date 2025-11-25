@@ -103,3 +103,4 @@ Si después de seguir todos estos pasos aún no funciona, comparte:
 3. Si las reglas de Firestore están configuradas
 
 
+

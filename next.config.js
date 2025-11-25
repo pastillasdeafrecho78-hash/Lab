@@ -12,8 +12,22 @@ const nextConfig = {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   },
-  // Asegurar que nodemailer se use solo en el servidor
-  serverComponentsExternalPackages: ['nodemailer'],
+  // Asegurar que nodemailer y pdfkit se usen solo en el servidor
+  serverComponentsExternalPackages: ['nodemailer', 'pdfkit'],
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Configurar webpack para manejar PDFKit en el servidor
+      config.externals = [...(config.externals || []), 'canvas', 'utf-8-validate', 'bufferutil']
+    }
+    // Manejar archivos estáticos de PDFKit
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      path: false,
+      crypto: false,
+    }
+    return config
+  },
 }
 
 module.exports = nextConfig

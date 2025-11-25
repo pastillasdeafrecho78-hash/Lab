@@ -271,3 +271,4 @@ La aplicación está en un **estado muy avanzado** y es **funcionalmente complet
 **Estado:** 🟢 MVP Operativo
 
 
+

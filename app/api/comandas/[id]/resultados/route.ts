@@ -45,7 +45,15 @@ export async function POST(
       where: { id: comandaId },
       include: {
         sucursal: true,
-        tipoPrueba: true
+        tipoPrueba: true,
+        cliente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true
+          }
+        }
       }
     })
 
@@ -64,7 +72,7 @@ export async function POST(
     }
 
     // Verificar acceso a la sucursal
-    if (user.rol !== 'SUPER_ADMIN' && !user.sucursales.some(s => s.id === comanda.sucursalId)) {
+    if (user.rol !== 'SUPER_ADMIN' && user.sucursales && Array.isArray(user.sucursales) && !user.sucursales.some(s => s.id === comanda.sucursalId)) {
       return NextResponse.json(
         { success: false, error: 'Sin acceso a esta comanda' },
         { status: 403 }
@@ -157,6 +165,7 @@ export async function POST(
 
   } catch (error: any) {
     console.error('Error al crear resultados:', error)
+    console.error('Stack trace:', error.stack)
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -166,7 +175,12 @@ export async function POST(
     }
 
     return NextResponse.json(
-      { success: false, error: 'Error interno del servidor' },
+      { 
+        success: false, 
+        error: 'Error interno del servidor',
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     )
   }

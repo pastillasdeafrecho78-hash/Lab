@@ -33,7 +33,15 @@ export async function GET(
       include: {
         cliente: true,
         sucursal: true,
-        tipoPrueba: true,
+        tipoPrueba: {
+          include: {
+            categorias: {
+              include: {
+                categoria: true
+              }
+            }
+          }
+        },
         creadoPor: {
           select: {
             id: true,
@@ -173,6 +181,34 @@ export async function PUT(
 
     // Manejar cambios de estado
     if (validatedData.estado && validatedData.estado !== comandaActual.estado) {
+      // Validar que no se pueda cambiar de EN_PROCESO a COMPLETADA sin todos los resultados
+      if (validatedData.estado === 'COMPLETADA' && comandaActual.estado === 'EN_PROCESO') {
+        // Obtener todos los resultados de la comanda
+        const resultados = await prisma.resultado.findMany({
+          where: { comandaId: id }
+        })
+
+        const elementosConResultado = resultados.map(r => r.elemento)
+        const todosLosElementosTienenResultado = comandaActual.elementos.every(elemento => 
+          elementosConResultado.includes(elemento)
+        )
+
+        if (!todosLosElementosTienenResultado) {
+          const elementosFaltantes = comandaActual.elementos.filter(elemento => 
+            !elementosConResultado.includes(elemento)
+          )
+          return NextResponse.json(
+            { 
+              success: false, 
+              error: 'No se puede completar la comanda sin todos los resultados. Faltan resultados para: ' + elementosFaltantes.join(', ')
+            },
+            { status: 400 }
+          )
+        }
+
+        updateData.fechaCompletado = new Date()
+      }
+
       updateData.estado = validatedData.estado
       historialEntries.push({
         tipoCambio: 'MODIFICAR_ESTADO',
@@ -187,10 +223,6 @@ export async function PUT(
         if (validatedData.asignadoAId) {
           updateData.asignadoAId = validatedData.asignadoAId
         }
-      }
-
-      if (validatedData.estado === 'COMPLETADA' && comandaActual.estado === 'EN_PROCESO') {
-        updateData.fechaCompletado = new Date()
       }
 
       if (validatedData.estado === 'ENTREGADA' && comandaActual.estado === 'COMPLETADA') {
@@ -350,7 +382,15 @@ export async function PUT(
       include: {
         cliente: true,
         sucursal: true,
-        tipoPrueba: true,
+        tipoPrueba: {
+          include: {
+            categorias: {
+              include: {
+                categoria: true
+              }
+            }
+          }
+        },
         creadoPor: {
           select: {
             id: true,

@@ -121,11 +121,11 @@ export async function GET(request: NextRequest) {
       })
     ])
 
-    // Obtener nombres de sucursales
+    // Obtener nombres de sucursales (incluir inactivas para comandas históricas)
     const sucursalIds = comandasPorSucursal.map(c => c.sucursalId)
     const sucursales = await prisma.sucursal.findMany({
       where: { id: { in: sucursalIds } },
-      select: { id: true, nombre: true }
+      select: { id: true, nombre: true, activa: true }
     })
 
     // Formatear datos por sucursal
@@ -182,8 +182,8 @@ export async function GET(request: NextRequest) {
         prisma.categoriaAnalito.findMany({
           select: { id: true, nombre: true }
         }),
+        // Incluir analitos inactivos para poder encontrar los que están en comandas históricas
         prisma.analito.findMany({
-          where: { activo: true },
           include: {
             categorias: {
               include: {
@@ -206,14 +206,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Contar por categoría
+    // Los elementos son nombres de analitos, no IDs
     analitos.forEach(analito => {
-      if (elementosCount[analito.id]) {
+      if (elementosCount[analito.nombre]) {
         // Un analito puede estar en múltiples categorías
         if (analito.categorias && analito.categorias.length > 0) {
           analito.categorias.forEach(catDetalle => {
             if (catDetalle.categoria) {
               const categoriaNombre = catDetalle.categoria.nombre
-              categoriasCount[categoriaNombre] = (categoriasCount[categoriaNombre] || 0) + elementosCount[analito.id]
+              categoriasCount[categoriaNombre] = (categoriasCount[categoriaNombre] || 0) + elementosCount[analito.nombre]
             }
           })
         }
@@ -221,12 +222,13 @@ export async function GET(request: NextRequest) {
     })
 
     // Top 10 analitos más solicitados
+    // Los elementos son nombres de analitos, buscar por nombre en lugar de ID
     const topAnalitos = Object.entries(elementosCount)
-      .map(([id, count]) => {
-        const analito = analitos.find(a => a.id === id)
+      .map(([nombreElemento, count]) => {
+        const analito = analitos.find(a => a.nombre === nombreElemento)
         return {
-          analitoId: id,
-          analitoNombre: analito?.nombre || 'Desconocido',
+          analitoId: analito?.id || nombreElemento,
+          analitoNombre: analito?.nombre || nombreElemento, // Si no se encuentra, usar el nombre del elemento
           cantidad: count
         }
       })

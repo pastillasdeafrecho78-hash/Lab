@@ -53,3 +53,4 @@ Después de publicar las reglas:
 3. Deberías ver: `[FIREBASE] ⚡ Snapshot recibido`
 4. Si ves errores de permisos, espera 1-2 minutos y vuelve a intentar (las reglas pueden tardar en propagarse)
 
+

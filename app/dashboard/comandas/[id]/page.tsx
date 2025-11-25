@@ -61,6 +61,13 @@ interface Comanda {
     id: string
     nombre: string
     elementos: string[]
+    categorias?: Array<{
+      categoria: {
+        id: string
+        nombre: string
+        descripcion?: string | null
+      }
+    }>
   }
   elementos: string[]
   creadoPor: {
@@ -239,6 +246,22 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
 
       // Solo incluir estado si realmente cambió
       if (editData.estado && editData.estado !== comanda?.estado) {
+        // Validar que no se pueda cambiar de EN_PROCESO a COMPLETADA sin todos los resultados
+        if (editData.estado === 'COMPLETADA' && comanda?.estado === 'EN_PROCESO') {
+          const elementosConResultado = comanda.resultados.map(r => r.elemento)
+          const todosLosElementosTienenResultado = comanda.elementos.every(elemento => 
+            elementosConResultado.includes(elemento)
+          )
+          
+          if (!todosLosElementosTienenResultado) {
+            const elementosFaltantes = comanda.elementos.filter(elemento => 
+              !elementosConResultado.includes(elemento)
+            )
+            toast.error(`No se puede completar la comanda. Faltan resultados para: ${elementosFaltantes.join(', ')}`)
+            return
+          }
+        }
+        
         updatePayload.estado = editData.estado
       }
 
@@ -330,7 +353,23 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
 
   const canComplete = () => {
     if (!comanda) return false
-    return comanda.estado === 'EN_PROCESO' && comanda.resultados.length > 0
+    if (comanda.estado !== 'EN_PROCESO') return false
+    
+    // Verificar que todos los elementos tengan resultados
+    const elementosConResultado = comanda.resultados.map(r => r.elemento)
+    const todosLosElementosTienenResultado = comanda.elementos.every(elemento => 
+      elementosConResultado.includes(elemento)
+    )
+    
+    return todosLosElementosTienenResultado
+  }
+
+  const getElementosFaltantes = () => {
+    if (!comanda) return []
+    const elementosConResultado = comanda.resultados.map(r => r.elemento)
+    return comanda.elementos.filter(elemento => 
+      !elementosConResultado.includes(elemento)
+    )
   }
 
   const canDeliver = () => {
@@ -446,6 +485,111 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
     return labels[tipo] || tipo
   }
 
+  // Función para obtener el nombre completo de una categoría
+  const getNombreCompletoCategoria = (nombreCategoria: string, categoriaId: string) => {
+    // Mapeo de abreviaciones comunes a nombres completos
+    const mapeoAbreviaciones: Record<string, string> = {
+      'QS-6': 'Química Completa 6',
+      'QS-5': 'Química Completa 5',
+      'QS-3': 'Química Básica 3',
+      'HEM': 'Hematología Completa',
+      'HEP': 'Perfil Hepático',
+      'REN': 'Perfil Renal',
+      'ELE': 'Electrolitos',
+      'TIR': 'Perfil Tiroideo'
+    }
+    
+    // Si hay un mapeo directo, usarlo
+    if (mapeoAbreviaciones[nombreCategoria]) {
+      return mapeoAbreviaciones[nombreCategoria]
+    }
+    
+    // Buscar en las categorías cargadas una que coincida mejor
+    const categoriaCompleta = categorias.find(c => 
+      c.id === categoriaId || 
+      (c.nombre.toLowerCase().includes(nombreCategoria.toLowerCase()) && 
+       c.nombre.length > nombreCategoria.length)
+    )
+    
+    return categoriaCompleta?.nombre || nombreCategoria
+  }
+
+  // Función para agrupar elementos por categoría de manera inteligente
+  const getElementosAgrupadosPorCategoria = () => {
+    if (!comanda || categorias.length === 0) {
+      return [{
+        categoria: null,
+        elementos: comanda?.elementos || []
+      }]
+    }
+
+    const elementos = comanda.elementos
+    const grupos: Array<{ categoria: CategoriaAnalito | null, elementos: string[] }> = []
+
+    // Encontrar la categoría con MAYOR compatibilidad (más elementos coincidentes)
+    let mejorCategoria: CategoriaAnalito | null = null
+    let maxCoincidencias = 0
+    let elementosEnMejorCategoria: string[] = []
+
+    for (const categoria of categorias) {
+      const elementosDeCategoria = categoria.analitos.map(d => d.analito.nombre)
+      const elementosCoincidentes = elementos.filter(e => 
+        elementosDeCategoria.includes(e)
+      )
+      
+      // Solo considerar categorías que tienen al menos un elemento coincidente
+      // Y que tienen más coincidencias que la mejor encontrada hasta ahora
+      if (elementosCoincidentes.length > maxCoincidencias) {
+        maxCoincidencias = elementosCoincidentes.length
+        mejorCategoria = categoria
+        elementosEnMejorCategoria = elementosCoincidentes
+      }
+    }
+
+    // Si encontramos una categoría con elementos coincidentes, mostrarla
+    if (mejorCategoria && elementosEnMejorCategoria.length > 0) {
+      grupos.push({
+        categoria: mejorCategoria,
+        elementos: ordenarElementosPorCategoria(elementosEnMejorCategoria, mejorCategoria)
+      })
+
+      // Elementos que no están en la mejor categoría van a "Otros"
+      const elementosOtros = elementos.filter(e => !elementosEnMejorCategoria.includes(e))
+      if (elementosOtros.length > 0) {
+        grupos.push({
+          categoria: null,
+          elementos: elementosOtros
+        })
+      }
+    } else {
+      // Si no hay ninguna categoría que coincida, todos van a "Otros"
+      grupos.push({
+        categoria: null,
+        elementos: elementos
+      })
+    }
+
+    return grupos
+  }
+
+  // Función auxiliar para ordenar elementos según el orden de la categoría
+  const ordenarElementosPorCategoria = (elementos: string[], categoria: CategoriaAnalito | null): string[] => {
+    if (!categoria || categoria.analitos.length === 0) {
+      return elementos
+    }
+    
+    const ordenMap = new Map<string, number>()
+    categoria.analitos.forEach((detalle) => {
+      ordenMap.set(detalle.analito.nombre, detalle.orden)
+    })
+    
+    return [...elementos].sort((a, b) => {
+      const ordenA = ordenMap.get(a) ?? Infinity
+      const ordenB = ordenMap.get(b) ?? Infinity
+      return ordenA - ordenB
+    })
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -525,7 +669,12 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
                       ? 'btn-success' 
                       : 'btn-secondary'
                   }`}
-                  disabled={comanda.estado === 'COMPLETADA'}
+                  disabled={comanda.estado === 'COMPLETADA' || !canComplete()}
+                  title={
+                    !canComplete() && comanda.estado === 'EN_PROCESO'
+                      ? `No se puede completar. Faltan resultados para: ${getElementosFaltantes().join(', ')}`
+                      : ''
+                  }
                 >
                   Finalizada
                 </button>
@@ -620,20 +769,36 @@ export default function ComandaDetailPage({ params }: { params: { id: string } }
                 <h3 className="text-lg font-semibold text-primary">Información de la Prueba</h3>
               </div>
               <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-tertiary">Tipo de Prueba</label>
-                  <p className="text-primary">{comanda.tipoPrueba.nombre}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-tertiary">Elementos a Analizar</label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {comanda.elementos.map(elemento => (
-                      <span key={elemento} className="badge badge-primary">
-                        {elemento.replace('_', ' ')}
-                      </span>
-                    ))}
+                {getElementosAgrupadosPorCategoria().map((grupo, index) => (
+                  <div key={index}>
+                    {grupo.categoria ? (
+                      <>
+                        <label className="text-sm font-medium text-tertiary">Categoría</label>
+                        <p className="text-primary mb-2">
+                          {getNombreCompletoCategoria(grupo.categoria.nombre, grupo.categoria.id)}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {grupo.elementos.map(elemento => (
+                            <span key={elemento} className="badge badge-primary">
+                              {elemento.replace('_', ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <label className="text-sm font-medium text-tertiary">Otros</label>
+                        <div className="flex flex-wrap gap-2">
+                          {grupo.elementos.map(elemento => (
+                            <span key={elemento} className="badge badge-primary">
+                              {elemento.replace('_', ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
-                </div>
+                ))}
                 {comanda.observaciones && (
                   <div>
                     <label className="text-sm font-medium text-tertiary">Observaciones</label>

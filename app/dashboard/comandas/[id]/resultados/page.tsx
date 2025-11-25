@@ -11,7 +11,8 @@ import {
   CheckIcon,
   XMarkIcon,
   MagnifyingGlassIcon,
-  FunnelIcon
+  FunnelIcon,
+  PrinterIcon
 } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 
@@ -48,6 +49,13 @@ interface Comanda {
   tipoPrueba: {
     id: string
     nombre: string
+    categorias?: Array<{
+      categoria: {
+        id: string
+        nombre: string
+        descripcion?: string | null
+      }
+    }>
   }
   resultados: Array<{
     id: string
@@ -73,6 +81,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
   const [categorias, setCategorias] = useState<CategoriaAnalito[]>([])
   const [analitos, setAnalitos] = useState<Analito[]>([])
   const [busquedaElemento, setBusquedaElemento] = useState('')
+  const [dropdownsAbiertos, setDropdownsAbiertos] = useState<Record<string, boolean>>({})
   const router = useRouter()
 
   // Cargar unidades previas desde localStorage
@@ -171,12 +180,63 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
     return analitos.find(a => a.nombre === nombre)
   }
 
+  // Función para obtener el nombre completo de una categoría
+  const getNombreCompletoCategoria = (nombreCategoria: string, categoriaId?: string) => {
+    // Mapeo de abreviaciones comunes a nombres completos
+    const mapeoAbreviaciones: Record<string, string> = {
+      'QS-6': 'Química Completa 6',
+      'QS-5': 'Química Completa 5',
+      'QS-3': 'Química Básica 3',
+      'HEM': 'Hematología Completa',
+      'HEP': 'Perfil Hepático',
+      'REN': 'Perfil Renal',
+      'ELE': 'Electrolitos',
+      'TIR': 'Perfil Tiroideo'
+    }
+    
+    // Si hay un mapeo directo, usarlo
+    if (mapeoAbreviaciones[nombreCategoria]) {
+      return mapeoAbreviaciones[nombreCategoria]
+    }
+    
+    // Buscar en las categorías cargadas una que coincida mejor
+    if (categoriaId) {
+      const categoriaCompleta = categorias.find(c => c.id === categoriaId)
+      if (categoriaCompleta && categoriaCompleta.nombre.length > nombreCategoria.length) {
+        return categoriaCompleta.nombre
+      }
+    }
+    
+    return nombreCategoria
+  }
+
   // Obtener categoría de un analito
   const getCategoriaDeAnalito = (nombreAnalito: string) => {
     const categoria = categorias.find(cat => 
       cat.analitos.some(detalle => detalle.analito.nombre === nombreAnalito)
     )
     return categoria
+  }
+
+  // Funciones para mostrar el estado con badge y color
+  const getEstadoBadge = (estado: string) => {
+    const badges = {
+      PENDIENTE: 'badge-warning',
+      EN_PROCESO: 'badge-primary',
+      COMPLETADA: 'badge-success',
+      ENTREGADA: 'badge-secondary'
+    }
+    return badges[estado as keyof typeof badges] || 'badge-secondary'
+  }
+
+  const getEstadoLabel = (estado: string) => {
+    const labels: Record<string, string> = {
+      PENDIENTE: 'Registrada',
+      EN_PROCESO: 'En Proceso',
+      COMPLETADA: 'Finalizada',
+      ENTREGADA: 'Entregada'
+    }
+    return labels[estado] || estado.replace('_', ' ')
   }
 
   // Obtener categoría que contiene los elementos de la comanda
@@ -212,73 +272,139 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
     return null
   }
 
+  // Ordenar elementos según el orden de la categoría
+  const ordenarElementosPorCategoria = (elementos: string[], categoria: CategoriaAnalito | null): string[] => {
+    if (!categoria || categoria.analitos.length === 0) {
+      return elementos
+    }
+    
+    // Crear un mapa del orden de cada analito en la categoría
+    const ordenMap = new Map<string, number>()
+    categoria.analitos.forEach((detalle, index) => {
+      ordenMap.set(detalle.analito.nombre, detalle.orden)
+    })
+    
+    // Ordenar elementos según el orden de la categoría
+    // Los elementos que no están en la categoría van al final
+    return [...elementos].sort((a, b) => {
+      const ordenA = ordenMap.get(a) ?? Infinity
+      const ordenB = ordenMap.get(b) ?? Infinity
+      return ordenA - ordenB
+    })
+  }
+
   // Obtener elementos agrupados por categoría
   const getElementosPorCategoria = () => {
+    // Bug 1: Fallback cuando categorias está vacío (similar al componente padre)
     if (!comanda) return []
+    if (categorias.length === 0) {
+      // Si hay búsqueda, filtrar por texto
+      if (busquedaElemento.trim()) {
+        const busquedaLower = busquedaElemento.toLowerCase()
+        const elementosFiltrados = comanda.elementos.filter(e => 
+          e.toLowerCase().includes(busquedaLower)
+        )
+        return [{
+          categoria: null,
+          elementos: elementosFiltrados
+        }]
+      }
+      return [{
+        categoria: null,
+        elementos: comanda.elementos
+      }]
+    }
     
-    let elementosFiltrados = comanda.elementos
-    let categoria = null
-    
-    // Si hay búsqueda, buscar por nombre de elemento o por categoría
+    const grupos: Array<{ categoria: CategoriaAnalito | null, elementos: string[] }> = []
+
+    // Si hay búsqueda por nombre de categoría, mostrar solo esa categoría
     if (busquedaElemento.trim()) {
       const busquedaLower = busquedaElemento.toLowerCase()
-      
-      // Primero buscar si coincide con alguna categoría
       const categoriaEncontrada = categorias.find(c => 
         c.nombre.toLowerCase().includes(busquedaLower) ||
         busquedaLower.includes(c.nombre.toLowerCase())
       )
       
       if (categoriaEncontrada) {
-        // Si se encontró una categoría, mostrar todos los elementos de esa categoría que estén en la comanda
+        // Bug 2: Cuando se encuentra una categoría, usar TODOS los elementos de la comanda
+        // (no los filtrados por nombre) y luego filtrar por membresía de categoría
         const elementosDeCategoria = categoriaEncontrada.analitos.map(d => d.analito.nombre)
-        elementosFiltrados = comanda.elementos.filter(e => 
+        const elementosEnCategoria = comanda.elementos.filter(e => 
           elementosDeCategoria.includes(e)
         )
-        categoria = categoriaEncontrada
-      } else {
-        // Si no se encontró categoría, buscar por nombre de elemento
-        elementosFiltrados = comanda.elementos.filter(e => 
-          e.toLowerCase().includes(busquedaLower)
+        const elementosOtros = comanda.elementos.filter(e => 
+          !elementosDeCategoria.includes(e)
         )
         
-        // Buscar la mejor categoría para los elementos filtrados
-        if (elementosFiltrados.length > 0) {
-          let mejorCategoria = null
-          let maxElementos = 0
-          
-          for (const cat of categorias) {
-            const elementosDeCategoria = cat.analitos.map(d => d.analito.nombre)
-            const elementosEncontrados = elementosFiltrados.filter(e => 
-              elementosDeCategoria.includes(e)
-            )
-            
-            if (elementosEncontrados.length > maxElementos) {
-              maxElementos = elementosEncontrados.length
-              mejorCategoria = cat
-            }
-          }
-          
-          // Solo mostrar categoría si tiene al menos un elemento coincidente
-          if (mejorCategoria && maxElementos > 0) {
-            categoria = mejorCategoria
-          }
+        if (elementosEnCategoria.length > 0) {
+          grupos.push({
+            categoria: categoriaEncontrada,
+            elementos: ordenarElementosPorCategoria(elementosEnCategoria, categoriaEncontrada)
+          })
         }
+        if (elementosOtros.length > 0) {
+          grupos.push({
+            categoria: null,
+            elementos: elementosOtros
+          })
+        }
+        return grupos
+      }
+    }
+    
+    // Si hay búsqueda por nombre de elemento (pero no por categoría), filtrar por texto
+    let elementosABuscar = comanda.elementos
+    if (busquedaElemento.trim()) {
+      const busquedaLower = busquedaElemento.toLowerCase()
+      elementosABuscar = comanda.elementos.filter(e => 
+        e.toLowerCase().includes(busquedaLower)
+      )
+    }
+
+    // Encontrar la categoría con MAYOR compatibilidad (más elementos coincidentes)
+    let mejorCategoria: CategoriaAnalito | null = null
+    let maxCoincidencias = 0
+    let elementosEnMejorCategoria: string[] = []
+
+    for (const categoria of categorias) {
+      const elementosDeCategoria = categoria.analitos.map(d => d.analito.nombre)
+      const elementosCoincidentes = elementosABuscar.filter(e => 
+        elementosDeCategoria.includes(e)
+      )
+      
+      // Solo considerar categorías que tienen al menos un elemento coincidente
+      // Y que tienen más coincidencias que la mejor encontrada hasta ahora
+      if (elementosCoincidentes.length > maxCoincidencias) {
+        maxCoincidencias = elementosCoincidentes.length
+        mejorCategoria = categoria
+        elementosEnMejorCategoria = elementosCoincidentes
+      }
+    }
+
+    // Si encontramos una categoría con elementos coincidentes, mostrarla
+    if (mejorCategoria && elementosEnMejorCategoria.length > 0) {
+      grupos.push({
+        categoria: mejorCategoria,
+        elementos: ordenarElementosPorCategoria(elementosEnMejorCategoria, mejorCategoria)
+      })
+
+      // Elementos que no están en la mejor categoría van a "Otros"
+      const elementosOtros = elementosABuscar.filter(e => !elementosEnMejorCategoria.includes(e))
+      if (elementosOtros.length > 0) {
+        grupos.push({
+          categoria: null,
+          elementos: elementosOtros
+        })
       }
     } else {
-      // Sin búsqueda, usar la categoría de todos los elementos
-      categoria = getCategoriaDelTipoPrueba()
+      // Si no hay ninguna categoría que coincida, todos van a "Otros"
+      grupos.push({
+        categoria: null,
+        elementos: elementosABuscar
+      })
     }
     
-    // Si no hay elementos filtrados, no mostrar categoría
-    if (elementosFiltrados.length === 0) {
-      categoria = null
-    }
-    
-    return [{
-      categoria: categoria,
-      elementos: elementosFiltrados
-    }]
+    return grupos
   }
 
   const initializeResultadosForm = (comandaData: Comanda) => {
@@ -392,6 +518,48 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
         toast.success('PDF descargado exitosamente')
+      } else {
+        toast.error('Error al generar PDF')
+      }
+    } catch (error) {
+      toast.error('Error de conexión')
+    }
+  }
+
+  const handlePrintPDF = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/comandas/${params.id}/pdf?tipo=resultados`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const printWindow = window.open(url, '_blank')
+        
+        if (printWindow) {
+          printWindow.onload = () => {
+            setTimeout(() => {
+              printWindow.print()
+              // Cerrar la ventana después de un tiempo si el usuario no imprime
+              setTimeout(() => {
+                printWindow.close()
+                window.URL.revokeObjectURL(url)
+              }, 1000)
+            }, 500)
+          }
+        } else {
+          // Si no se puede abrir ventana, descargar como fallback
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `resultados_${comanda?.numeroComanda}.pdf`
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          window.URL.revokeObjectURL(url)
+          toast.info('PDF descargado. Por favor ábrelo e imprímelo manualmente.')
+        }
       } else {
         toast.error('Error al generar PDF')
       }
@@ -518,13 +686,35 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
             </div>
             
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => handleSubmitResultados()}
-                className="btn btn-primary"
-              >
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Agregar Resultados
-              </button>
+              {comanda.resultados.length > 0 && (
+                <>
+                  <button
+                    onClick={handlePrintPDF}
+                    className="btn btn-secondary flex items-center gap-2"
+                    title="Imprimir resultados membretados"
+                  >
+                    <PrinterIcon className="h-5 w-5" />
+                    Imprimir
+                  </button>
+                  <button
+                    onClick={handleDownloadPDF}
+                    className="btn btn-secondary flex items-center gap-2"
+                    title="Descargar PDF de resultados"
+                  >
+                    <DocumentArrowDownIcon className="h-5 w-5" />
+                    Descargar PDF
+                  </button>
+                </>
+              )}
+              {getElementosSinResultado().length > 0 && (
+                <button
+                  onClick={() => handleSubmitResultados()}
+                  className="btn btn-primary"
+                >
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  Agregar Resultados
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -534,18 +724,18 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Información de la comanda */}
         <div className="card mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium text-tertiary">Tipo de Prueba</label>
-              <p className="text-primary">{comanda.tipoPrueba.nombre}</p>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-tertiary">Sucursal</label>
               <p className="text-primary">{comanda.sucursal.nombre}</p>
             </div>
             <div>
               <label className="text-sm font-medium text-tertiary">Estado</label>
-              <p className="text-primary">{comanda.estado.replace('_', ' ')}</p>
+              <div className="mt-1">
+                <span className={`badge ${getEstadoBadge(comanda.estado)}`}>
+                  {getEstadoLabel(comanda.estado)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -578,35 +768,26 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
 
               {getElementosPorCategoria().map((grupo, grupoIndex) => (
                 <div key={grupoIndex} className="mb-6">
-                  {/* Tipo de Prueba / Categoría */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-tertiary mb-2">
-                      Tipo de Prueba
-                    </label>
-                    <p className="text-lg font-semibold text-primary">
-                      {comanda.tipoPrueba.nombre}
-                    </p>
-                  </div>
-
                   {/* Categoría */}
-                  {grupo.categoria && (
+                  {grupo.categoria ? (
                     <div className="mb-4">
                       <label className="block text-sm font-medium text-tertiary mb-2">
                         Categoría
                       </label>
-                      <p className="text-lg font-semibold text-primary">
-                        {grupo.categoria.nombre}
+                      <p className="text-lg font-semibold text-primary mb-3">
+                        {getNombreCompletoCategoria(grupo.categoria.nombre, grupo.categoria.id)}
                       </p>
+                    </div>
+                  ) : (
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-tertiary mb-2">
+                        Otros
+                      </label>
                     </div>
                   )}
 
-                  {/* Elementos a Analizar */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-secondary mb-3">
-                      Elementos a Analizar ({grupo.elementos.length})
-                    </label>
-                    <div className="space-y-4">
-                      {grupo.elementos.map((elemento) => {
+                  <div className="space-y-4">
+                    {grupo.elementos.map((elemento) => {
                         const analitoInfo = getAnalitoInfo(elemento)
                         const resultadoExistente = comanda.resultados.find(r => r.elemento === elemento)
                         const formData = resultadosForm[elemento] || {
@@ -666,6 +847,50 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                                           unidad: e.target.value
                                         }
                                       }))
+                                      // Mostrar dropdown cuando hay texto y unidades coincidentes
+                                      const tieneCoincidencias = unidadesPrevias.filter(u => 
+                                        u.toLowerCase().includes(e.target.value.toLowerCase())
+                                      ).length > 0
+                                      if (e.target.value && tieneCoincidencias) {
+                                        setDropdownsAbiertos(prev => ({ ...prev, [elemento]: true }))
+                                      }
+                                    }}
+                                    onFocus={() => {
+                                      const tieneCoincidencias = unidadesPrevias.filter(u => 
+                                        u.toLowerCase().includes(formData.unidad.toLowerCase())
+                                      ).length > 0
+                                      if (formData.unidad && tieneCoincidencias) {
+                                        setDropdownsAbiertos(prev => ({ ...prev, [elemento]: true }))
+                                      }
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault()
+                                        // Cerrar dropdown al presionar Enter
+                                        setDropdownsAbiertos(prev => ({ ...prev, [elemento]: false }))
+                                        // Si hay una única coincidencia, seleccionarla
+                                        const coincidencias = unidadesPrevias.filter(u => 
+                                          u.toLowerCase().includes(formData.unidad.toLowerCase())
+                                        )
+                                        if (coincidencias.length === 1) {
+                                          setResultadosForm(prev => ({
+                                            ...prev,
+                                            [elemento]: {
+                                              ...prev[elemento],
+                                              unidad: coincidencias[0]
+                                            }
+                                          }))
+                                          setDropdownsAbiertos(prev => ({ ...prev, [elemento]: false }))
+                                        }
+                                      } else if (e.key === 'Escape') {
+                                        setDropdownsAbiertos(prev => ({ ...prev, [elemento]: false }))
+                                      }
+                                    }}
+                                    onBlur={() => {
+                                      // Delay para permitir click en el dropdown
+                                      setTimeout(() => {
+                                        setDropdownsAbiertos(prev => ({ ...prev, [elemento]: false }))
+                                      }, 200)
                                     }}
                                     className="input"
                                     placeholder="mg/dL"
@@ -674,14 +899,21 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                                   {/* Dropdown de unidades previas */}
                                   {unidadesPrevias.filter(u => 
                                     u.toLowerCase().includes(formData.unidad.toLowerCase())
-                                  ).length > 0 && formData.unidad && (
-                                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                  ).length > 0 && formData.unidad && dropdownsAbiertos[elemento] && (
+                                    <div 
+                                      className="absolute z-50 w-full mt-1 border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                                      style={{ 
+                                        backgroundColor: 'rgb(var(--color-gray-50))',
+                                        color: 'var(--color-text-primary)'
+                                      }}
+                                      onMouseDown={(e) => e.preventDefault()}
+                                    >
                                       {unidadesPrevias.filter(u => 
                                         u.toLowerCase().includes(formData.unidad.toLowerCase())
                                       ).map((unidad, unidadIndex) => (
                                         <div
                                           key={unidadIndex}
-                                          className="flex items-center justify-between px-3 py-2 hover:bg-gray-50 cursor-pointer group"
+                                          className="flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer group"
                                           onMouseDown={(e) => {
                                             e.preventDefault()
                                             setResultadosForm(prev => ({
@@ -691,9 +923,11 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                                                 unidad: unidad
                                               }
                                             }))
+                                            // Cerrar dropdown al seleccionar
+                                            setDropdownsAbiertos(prev => ({ ...prev, [elemento]: false }))
                                           }}
                                         >
-                                          <span className="text-sm text-secondary">{unidad}</span>
+                                          <span className="text-sm font-medium text-secondary">{unidad}</span>
                                           <button
                                             type="button"
                                             onClick={(e) => eliminarUnidadPrevia(unidad, e)}
@@ -754,7 +988,6 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                           </div>
                         )
                       })}
-                    </div>
                   </div>
                 </div>
               ))}
@@ -838,3 +1071,4 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
     </div>
   )
 }
+
