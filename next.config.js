@@ -13,7 +13,7 @@ const nextConfig = {
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   },
   // Asegurar que nodemailer y pdfkit se usen solo en el servidor
-  serverComponentsExternalPackages: ['nodemailer', 'pdfkit'],
+  serverComponentsExternalPackages: ['nodemailer', 'pdfkit', 'jspdf'],
   webpack: (config, { isServer }) => {
     if (isServer) {
       // Configurar webpack para manejar PDFKit en el servidor

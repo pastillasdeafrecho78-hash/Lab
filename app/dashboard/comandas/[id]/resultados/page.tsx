@@ -12,7 +12,8 @@ import {
   XMarkIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
-  PrinterIcon
+  PrinterIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 
@@ -45,6 +46,9 @@ interface Comanda {
   sucursal: {
     id: string
     nombre: string
+    direccion?: string
+    telefono?: string
+    email?: string | null
   }
   tipoPrueba: {
     id: string
@@ -474,7 +478,6 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
     }
   }
 
-
   const handleDelete = async (resultadoId: string) => {
     if (!confirm('¿Estás seguro de que quieres eliminar este resultado?')) {
       return
@@ -558,7 +561,7 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
           a.click()
           document.body.removeChild(a)
           window.URL.revokeObjectURL(url)
-          toast.info('PDF descargado. Por favor ábrelo e imprímelo manualmente.')
+          toast('PDF descargado. Por favor ábrelo e imprímelo manualmente.', { icon: 'ℹ️' })
         }
       } else {
         toast.error('Error al generar PDF')
@@ -695,6 +698,14 @@ export default function ResultadosPage({ params }: { params: { id: string } }) {
                   >
                     <PrinterIcon className="h-5 w-5" />
                     Imprimir
+                  </button>
+                  <button
+                    onClick={() => router.push(`/dashboard/comandas/${params.id}/modificaciones`)}
+                    className="btn btn-secondary flex items-center gap-2"
+                    title="Ver modificaciones y formato membretado"
+                  >
+                    <DocumentTextIcon className="h-5 w-5" />
+                    Modificaciones
                   </button>
                   <button
                     onClick={handleDownloadPDF}

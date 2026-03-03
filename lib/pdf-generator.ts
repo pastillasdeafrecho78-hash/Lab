@@ -1,4 +1,3 @@
-import { jsPDF } from 'jspdf'
 import { Comanda, Resultado } from '@/types'
 
 interface PDFData {
@@ -15,8 +14,10 @@ interface PDFData {
 }
 
 export function generateResultadosPDF(data: PDFData): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
+      // Importación dinámica de jsPDF solo en servidor
+      const { jsPDF } = await import('jspdf')
       const doc = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -106,8 +107,6 @@ export function generateResultadosPDF(data: PDFData): Promise<Buffer> {
 
       doc.setFontSize(10)
       doc.setFont('helvetica', 'normal')
-      doc.text(`Tipo de Prueba: ${data.comanda.tipoPrueba?.nombre || 'N/A'}`, 25, yPosition)
-      yPosition += 5
       doc.text(`Elementos Analizados: ${data.comanda.elementos.length}`, 25, yPosition)
       yPosition += 5
       doc.text(`Estado: ${data.comanda.estado.replace('_', ' ')}`, 25, yPosition)
@@ -291,8 +290,10 @@ export function generateResultadosPDF(data: PDFData): Promise<Buffer> {
 }
 
 export function generateComandaPDF(comanda: Comanda, laboratorioInfo: any): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
+      // Importación dinámica de jsPDF solo en servidor
+      const { jsPDF } = await import('jspdf')
       const doc = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -356,8 +357,6 @@ export function generateComandaPDF(comanda: Comanda, laboratorioInfo: any): Prom
 
       doc.setFontSize(10)
       doc.setFont('helvetica', 'normal')
-      doc.text(`Tipo: ${comanda.tipoPrueba?.nombre || 'N/A'}`, 20, yPosition)
-      yPosition += 5
       doc.text('Elementos:', 20, yPosition)
       yPosition += 5
       

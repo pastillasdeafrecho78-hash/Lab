@@ -28,7 +28,16 @@ export async function GET(
       return NextResponse.json({ success: false, error: 'Token requerido' }, { status: 401 })
     }
 
-    const user = await getUserFromToken(token)
+    let user
+    try {
+      user = await getUserFromToken(token)
+    } catch (error: any) {
+      if (error.message === 'Token inválido' || error.message?.includes('Token')) {
+        return NextResponse.json({ success: false, error: 'Token inválido o expirado' }, { status: 401 })
+      }
+      throw error
+    }
+
     const { id } = params
 
     if (user.id !== id && !['SUPER_ADMIN', 'RESPONSABLE_SANITARIO'].includes(user.rol)) {
@@ -73,7 +82,16 @@ export async function PUT(
       return NextResponse.json({ success: false, error: 'Token requerido' }, { status: 401 })
     }
 
-    const user = await getUserFromToken(token)
+    let user
+    try {
+      user = await getUserFromToken(token)
+    } catch (error: any) {
+      if (error.message === 'Token inválido' || error.message?.includes('Token')) {
+        return NextResponse.json({ success: false, error: 'Token inválido o expirado' }, { status: 401 })
+      }
+      throw error
+    }
+
     const { id } = params
 
     if (user.id !== id) {

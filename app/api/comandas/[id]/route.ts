@@ -37,7 +37,23 @@ export async function GET(
           include: {
             categorias: {
               include: {
-                categoria: true
+                categoria: {
+                  include: {
+                    analitos: {
+                      include: {
+                        analito: true
+                      },
+                      orderBy: {
+                        orden: 'asc'
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            analitosAsignados: {
+              include: {
+                analito: true
               }
             }
           }
@@ -243,7 +259,7 @@ export async function PUT(
             descripcion: 'Comanda archivada manualmente'
           })
         } else {
-          updateData.fechaArchivado = null
+          updateData.fechaArchivado = undefined
           historialEntries.push({
             tipoCambio: 'DESARCHIVAR',
             campoAnterior: 'Archivada',
@@ -293,7 +309,7 @@ export async function PUT(
           agregados.forEach(elemento => {
             historialEntries.push({
               tipoCambio: 'AGREGAR_PARAMETRO',
-              campoAnterior: null,
+              campoAnterior: undefined,
               campoNuevo: elemento,
               descripcion: `Parámetro "${elemento}" agregado`
             })
@@ -305,7 +321,7 @@ export async function PUT(
             historialEntries.push({
               tipoCambio: 'QUITAR_PARAMETRO',
               campoAnterior: elemento,
-              campoNuevo: null,
+              campoNuevo: undefined,
               descripcion: `Parámetro "${elemento}" quitado`
             })
           })
